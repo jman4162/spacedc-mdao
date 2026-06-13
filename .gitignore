@@ -1,6 +1,10 @@
 # Reference papers — not redistributed; cite by arXiv ID (e.g. arXiv:2511.19468)
 *.pdf
 
+# Local-only reference (CC BY-SA from Wikipedia; kept out of this MIT repo).
+# Cited by URL: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing
+AI_WRITING_SLOP_Guide.md
+
 # Python
 __pycache__/
 *.py[cod]

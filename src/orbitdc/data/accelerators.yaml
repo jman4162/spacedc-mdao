@@ -1,0 +1,109 @@
+# Accelerator catalog.
+# peak_tflops_dense is DENSE tensor throughput at `precision`. The widely quoted
+# H100 figures (1979 FP16 / 3958 FP8 TFLOPS) assume 2:4 structured sparsity;
+# dense is half. We store dense and flag sparsity support separately.
+
+h100_sxm:
+  name: "NVIDIA H100 SXM"
+  precision: "fp16"
+  sparsity_supported: true
+  tdp_w:
+    value: 700.0
+    units: "W"
+    source: "NVIDIA H100 datasheet (configurable TDP up to 700 W)"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "vendor"
+  peak_tflops_dense:
+    value: 989.0
+    units: "TFLOP/s"
+    source: "NVIDIA H100 datasheet: dense FP16 tensor = 989 TFLOPS (1979 with 2:4 sparsity)"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "vendor"
+  memory_gb:
+    value: 80.0
+    units: "GB"
+    source: "NVIDIA H100 SXM datasheet"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "vendor"
+  mem_bw_tb_s:
+    value: 3.35
+    units: "TB/s"
+    source: "NVIDIA H100 SXM datasheet"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "vendor"
+  mass_kg:
+    value: 1.5
+    units: "kg"
+    source: "Estimated board+module share; SXM module mass not published"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  unit_cost_usd:
+    value: 25000.0
+    units: "USD"
+    source: "Estimated street price, 2025-2026"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+
+tpu_like:
+  name: "Generic TPU-like accelerator"
+  precision: "bf16"
+  sparsity_supported: false
+  tdp_w:
+    value: 170.0
+    units: "W"
+    source: "Order-of-magnitude for a TPU-v5e-class part"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  peak_tflops_dense:
+    value: 197.0
+    units: "TFLOP/s"
+    source: "Order-of-magnitude bf16 for a TPU-v5e-class part"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  memory_gb: 16.0
+  mem_bw_tb_s: 0.82
+  mass_kg:
+    value: 1.0
+    units: "kg"
+    source: "Estimated"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  unit_cost_usd:
+    value: 8000.0
+    units: "USD"
+    source: "Estimated"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "speculative"
+
+generic_asic:
+  name: "Generic inference ASIC"
+  precision: "fp8"
+  sparsity_supported: false
+  tdp_w: 400.0
+  peak_tflops_dense:
+    value: 500.0
+    units: "TFLOP/s"
+    source: "Placeholder for a custom space-oriented ASIC"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "speculative"
+  memory_gb: 48.0
+  mem_bw_tb_s: 2.0
+  mass_kg: 1.2
+  unit_cost_usd:
+    value: 10000.0
+    units: "USD"
+    source: "Placeholder"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "speculative"

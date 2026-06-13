@@ -1,0 +1,36 @@
+# Solar-array catalog. specific_power is at the array output, beginning of life.
+# NASA SoA reports real arrays cluster near ~30 W/kg with an empirical upper
+# bound near ~200 W/kg; modern rigid/flexible arrays sit in between.
+
+rigid_triple_junction:
+  name: "Rigid triple-junction array"
+  specific_power_w_per_kg:
+    value: 100.0
+    units: "W/kg"
+    source: "NASA SoA range ~30-200 W/kg; mid-range estimate for modern rigid arrays"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  cell_efficiency:
+    value: 0.30
+    units: "fraction"
+    source: "Typical triple-junction cell efficiency"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "empirical"
+  packing_efficiency: 0.85
+  pointing_efficiency: 0.95
+  annual_degradation:
+    value: 0.02
+    units: "fraction/yr"
+    source: "Typical LEO array degradation"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "empirical"
+  cost_per_w_usd:
+    value: 50.0
+    units: "USD/W"
+    source: "Estimated space-qualified array cost"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"

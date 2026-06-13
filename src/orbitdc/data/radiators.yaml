@@ -1,0 +1,42 @@
+# Radiator catalog. t_sink is the effective radiative sink (deep space plus
+# Earth IR/albedo loading in LEO), not 3 K. t_radiator is the panel operating
+# temperature set by the coolant loop and chip-junction budget.
+
+aluminum_panel:
+  name: "Aluminum body-mounted/deployable radiator"
+  areal_mass_kg_per_m2:
+    value: 5.0
+    units: "kg/m^2"
+    source: "Typical aluminum radiator panel areal mass incl. heat pipes"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  emissivity:
+    value: 0.85
+    units: "fraction"
+    source: "Typical white-paint / OSR radiator emissivity"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "empirical"
+  t_radiator_k:
+    value: 320.0
+    units: "K"
+    source: "Panel temperature consistent with coolant loop and chip junction budget"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  t_sink_k:
+    value: 250.0
+    units: "K"
+    source: "Effective LEO sink with Earth IR/albedo loading"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  view_factor: 0.90
+  cost_per_m2_usd:
+    value: 5000.0
+    units: "USD/m^2"
+    source: "Estimated space-qualified radiator cost"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"

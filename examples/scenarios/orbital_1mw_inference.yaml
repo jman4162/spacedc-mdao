@@ -1,0 +1,33 @@
+name: "1 MW orbital inference cluster"
+kind: space
+mission_life_years: 5
+accelerator: h100_sxm
+utilization: 0.85
+sustained_fraction: 0.55
+discount_rate: 0.08
+
+workload:
+  type: llm_inference
+  # bits moved to ground per FLOP of delivered compute; small for compact output.
+  comm_intensity_bits_per_flop: 2.0e-6
+
+space:
+  orbit:
+    type: dawn_dusk_sso
+    altitude_km: 650.0
+  architecture:
+    satellites: 64
+    accelerators_per_satellite: 18
+    crosslink: optical
+    crosslink_gbps: 50000.0
+    downlink_gbps: 200.0
+    radiator_area_m2_per_sat: 45.0
+  it_power_overhead_frac: 0.25
+  non_it_power_frac: 0.10
+  solar_array: rigid_triple_junction
+  battery: li_ion_generic
+  radiator: aluminum_panel
+  launch: current_reusable
+  annual_failure_rate: 0.05
+  spare_fraction: 0.05
+  reset_recovery_availability: 0.99

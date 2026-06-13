@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spacedc-mdao"
+version = "0.1.0"
+description = "Multidisciplinary design analysis and optimization of orbital compute infrastructure, with terrestrial data-center baselines."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "John Hodge" }]
+keywords = ["mdao", "orbital", "data-center", "space", "compute", "trade-study"]
+
+dependencies = [
+    "pydantic>=2.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pint>=0.23",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+# Tier-1 RF link-budget backend (opensatcom is John's MIT satcom library).
+# Phase 1 rf.py falls back to inline Friis/FSPL when this is not installed.
+rf = ["opensatcom>=0.4.0"]
+dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
+
+[project.scripts]
+orbitdc = "orbitdc.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/orbitdc"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "NPY", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["scipy.*", "matplotlib.*", "opensatcom.*", "pint.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

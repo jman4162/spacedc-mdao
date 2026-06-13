@@ -2,15 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: greenfield
+## Status: Phase 1 implemented
 
-There is **no code yet**. The repo currently contains only:
+The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + a notebook. OpenMDAO, the interactive viz stack, and high-fidelity plugins remain deferred (later phases).
 
-- `SPEC.md` — the authoritative design contract. Read it before doing any implementation work; it defines the package concept, model families, package layout, tech-stack choices, and MVP scope.
-- `EQUATIONS.md` — the authoritative equation map: the coupled conservation laws and bottleneck equations behind every model (compute, power, thermal, mass, orbit, RF, optical, network, reliability, cost, Earth baseline, environmental, optimization). When implementing a `models/` module, this is the reference for the actual math, the v0.1 minimum equation set per discipline (§15), and what to explicitly avoid early (§16). Note: its LaTeX is lightly mangled (markdown ate some `\frac`/`=` lines) — read for intent, not copy-paste.
-- `2511.19468v1.pdf` — a reference orbital-data-center feasibility paper cited by the spec (arXiv:2511.19468). Excluded from git (see `.gitignore`); cite by ID.
+Key reference docs:
 
-This is not yet a git repo and has no packaging, tests, or tooling. When scaffolding, follow `SPEC.md` rather than inventing a different structure.
+- `SPEC.md` — the design contract: package concept, model families, full target layout, and MVP scope.
+- `EQUATIONS.md` — the equation map behind every model, in GitHub-rendered `$$` LaTeX. The v0.1 minimum equation set per discipline is §15; what to avoid early is §16. Each `models/` module cites its section.
+- `2511.19468v1.pdf` — reference orbital-data-center feasibility paper (arXiv:2511.19468). Excluded from git (see `.gitignore`); cite by ID.
+- The approved Phase 1 plan: `~/.claude/plans/please-make-an-implementation-rustling-puddle.md`.
+
+Note the layout differs slightly from the SPEC's aspirational tree: Phase 1 keeps power/thermal sizing inside the discipline models, sizes power/thermal to load (so the feasibility pressure surfaces as mass, cost, radiator-packaging ratio, and network throttling rather than an `f_power` < 1), and defers the `mdao/` and `formation/environmental` modules.
 
 ## What this package is
 
@@ -59,16 +62,21 @@ Two cross-cutting conventions that must hold across all models:
 1. **Model tiers (Tier 0–4).** Default fidelity is **Tier 1** (engineering trade studies). Tier 0 (scalar calculators) is "too easy to misuse"; Tier 3 (high-fidelity external plugins) is too slow for broad sweeps. Each physical model should offer tiered implementations behind a common interface, with plugins optional, never mandatory.
 2. **Assumption provenance.** Every default number must carry source, date, confidence, and a flag for empirical / vendor-stated / estimated / speculative. This feeds the assumption-provenance viz and is a first-class requirement, not a nicety. Do **not** bake in single magic numbers for sensitive inputs (especially launch $/kg) — treat them as scenario distributions (pessimistic / current / aggressive / speculative).
 
-## Intended tech stack (do not substitute without reason)
+## Tech stack
 
-- **OpenMDAO** is the MDAO backbone — do *not* hand-roll an optimizer framework.
-- `pydantic` for validated input schemas; `pint` or Astropy units for units.
-- `numpy` / `scipy` / `pandas` / `polars` for analysis.
-- `gpkit` (optional) for convex/geometric-programming trade studies.
-- `poliastro` / `astropy` for orbital mechanics (advanced mode; beginner mode uses orbit presets).
-- `plotly` / `altair` / `pyvista` / `networkx` / `panel` for visualization.
-- `SALib` (or equivalent) for sensitivity analysis.
-- `pytest` with **regression tests against known examples** — the spec calls these out specifically; new physics/cost models should ship with a regression fixture.
+Phase 1 (current) is deliberately dependency-light. The fuller stack below is the eventual target, phased in as fidelity grows. See the approved plan at `~/.claude/plans/please-make-an-implementation-rustling-puddle.md` for the Phase 1 scope and rationale.
+
+Phase 1 (in use now):
+- `pydantic` v2 for validated input schemas and the `Assumption` provenance type.
+- `pint` for units **at the I/O boundary only**; model math runs on plain SI floats (documented in names/docstrings) to stay fast and mypy-clean.
+- `numpy` / `scipy` for analysis; `pyyaml` for scenarios; `matplotlib` for the Phase 1 static plots (waterfall, cost waterfall, tornado).
+- `pytest` with **golden-value regression tests** — every physics/cost model ships with a hand-checkable fixture. This is a hard requirement, not optional.
+- Optional `[rf]` extra: **`opensatcom`** (John's MIT satcom library) as the Tier-1 RF link-budget backend; `rf.py` falls back to inline Friis/FSPL when it is not installed.
+
+Deferred to later phases (do not pull in for Phase 1):
+- **OpenMDAO** — the eventual MDAO backbone (Tier 2 coupled solves). Keep model functions pure/side-effect-free so they wrap cleanly as `ExplicitComponent`s later. Do *not* hand-roll an optimizer framework when this lands.
+- `gpkit` (convex/GP trade studies, only where physics is cleanly monomial/posynomial); the interactive viz stack (`plotly` / `altair` / `pyvista` / `networkx` / `panel`); `SALib` for Sobol sensitivity; `pandas` / `polars`.
+- Orbital-mechanics library: **`poliastro` is archived/unmaintained (since Oct 2023) — do not adopt it.** Phase 1 uses closed-form orbit math (period, circular velocity, cylindrical-shadow eclipse fraction). If a library is later needed, prefer the maintained fork **`hapsira`** or `astropy` + `sgp4`.
 
 ## MVP scope — build this first, in this spirit
 
@@ -93,4 +101,34 @@ result.explain_binding_constraints()
 
 ## Commands
 
-None yet — no build/test/lint tooling is configured. When you add packaging (`pyproject.toml`) and a test suite, document the real `pytest` / lint / install commands here, replacing this section.
+The project uses `uv` for environment and dependency management.
+
+```bash
+uv sync --extra rf --extra dev     # create venv + install package with optional extras
+uv run ruff check .                # lint
+uv run ruff format --check .       # formatting check (drop --check to apply)
+uv run mypy src                    # type-check (strict)
+uv run pytest                      # run the test suite
+uv run pytest tests/test_orbit.py -k eclipse   # run a single test
+uv run python -m orbitdc compare examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_hyperscale_baseline.yaml
+```
+
+**Code-quality gate:** all code must pass `ruff check`, `ruff format`, and `mypy --strict` (configured over `src/`) before commit. CI (`.github/workflows/ci.yml`) enforces ruff + mypy + pytest; do not commit changes that break them.
+
+## Writing style — avoid AI slop
+
+These rules apply to everything we publish: README, docs, docstrings, code comments, commit/PR messages, `SPEC.md`/`EQUATIONS.md` prose, and any papers. They are distilled from Wikipedia's "Signs of AI writing" (<https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing>). The goal is plain, specific, falsifiable technical writing.
+
+Do not write:
+- **Significance inflation / puffery:** "stands as a testament", "plays a pivotal/vital/crucial role", "marks a turning point", "evolving landscape", "rich tapestry", "groundbreaking", "renowned", "seamless", "robust" (as filler), "boasts" (meaning "has").
+- **Trailing "-ing" significance clauses:** "…, highlighting its importance", "…, reflecting broader trends", "…, underscoring the need for…", "…, showcasing…". Delete them or state the concrete consequence.
+- **Vague attribution / weasel sourcing:** "experts argue", "studies show", "it is widely regarded", "industry reports suggest". Cite a specific source (with a number or link) or drop the claim.
+- **Boilerplate "Challenges / Future Outlook / Despite its … faces several challenges" sections.** State concrete limitations with numbers instead.
+- **Negative-parallelism filler:** "not just X, but Y", "it's not merely X — it's Y". Compulsive rule-of-three triads. Elegant variation (call the same thing by the same name every time; don't swap synonyms for variety).
+- **The AI-vocab cluster:** *additionally* (as a sentence-opener), *crucial, delve, leverage, underscore, intricate, testament, tapestry, foster, meticulous, comprehensive, pivotal, vibrant, garner, bolster*.
+
+Formatting:
+- Sentence-case headings, not Title Case. Use boldface sparingly. Straight quotes, no decorative em-dash runs, no emoji. Standard Markdown only.
+- Plain "X is Y" copula sentences are good — don't contort to avoid "is"/"are".
+
+Default to concrete, specific statements with numbers and a source. When a number is uncertain, say so and tag it (the `Assumption` provenance type — source, date, confidence, kind — is the structural antidote to slop; see below). When you don't know, say so plainly rather than generating confident filler.

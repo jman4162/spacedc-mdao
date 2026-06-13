@@ -1,0 +1,42 @@
+# Launch catalog. Launch price is the single most sensitive input, so it is a
+# distribution, not one magic number. Do not collapse it to a point estimate.
+
+current_reusable:
+  name: "Current reusable medium-lift (LEO)"
+  cost_per_kg_usd:
+    value: 3000.0
+    units: "USD/kg"
+    source: "Public-ish reusable LEO price, 2025-2026"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+    distribution: "triangular"
+    low: 1500.0
+    high: 6000.0
+  capacity_kg:
+    value: 22800.0
+    units: "kg"
+    source: "Medium-lift reusable LEO capacity"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "vendor"
+
+aggressive_future:
+  name: "Speculative low-cost heavy-lift (mid-2030s)"
+  cost_per_kg_usd:
+    value: 200.0
+    units: "USD/kg"
+    source: "Google Suncatcher scenario: launch may fall below ~$200/kg by mid-2030s"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "speculative"
+    distribution: "triangular"
+    low: 100.0
+    high: 500.0
+  capacity_kg:
+    value: 100000.0
+    units: "kg"
+    source: "Speculative heavy-lift LEO capacity"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "speculative"

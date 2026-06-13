@@ -1,0 +1,26 @@
+# Battery catalog. specific_energy at pack level; usable energy limited by DOD.
+
+li_ion_generic:
+  name: "Space-qualified Li-ion pack"
+  specific_energy_wh_per_kg:
+    value: 150.0
+    units: "Wh/kg"
+    source: "Typical space-qualified Li-ion pack-level specific energy"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "empirical"
+  depth_of_discharge:
+    value: 0.40
+    units: "fraction"
+    source: "Conservative LEO cycle-life DOD"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "empirical"
+  round_trip_efficiency: 0.90
+  cost_per_wh_usd:
+    value: 0.50
+    units: "USD/Wh"
+    source: "Estimated space-qualified pack cost"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
