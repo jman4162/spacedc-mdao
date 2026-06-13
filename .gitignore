@@ -1,0 +1,25 @@
+# Reference papers — not redistributed; cite by arXiv ID (e.g. arXiv:2511.19468)
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
