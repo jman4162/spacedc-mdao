@@ -5,32 +5,8 @@ convention as ``orbitdc.core.registry``.
 
 from __future__ import annotations
 
-from functools import cache
-from importlib.resources import files
-from typing import Any, cast
-
-import yaml
-
+from orbitdc.core.catalog_loader import entry as _entry
 from orbitdc.thermal.surfaces import ChipThermalStack, Coating, CoolantLoop, RadiatorSurface
-
-
-def _resolve(raw: Any) -> Any:
-    if isinstance(raw, dict) and "value" in raw:
-        return raw["value"]
-    return raw
-
-
-@cache
-def _load(filename: str) -> dict[str, Any]:
-    text = (files("orbitdc.data") / filename).read_text()
-    return cast(dict[str, Any], yaml.safe_load(text) or {})
-
-
-def _entry(filename: str, key: str) -> dict[str, Any]:
-    catalog = _load(filename)
-    if key not in catalog:
-        raise KeyError(f"unknown entry {key!r} in {filename}; available: {sorted(catalog)}")
-    return {k: _resolve(v) for k, v in catalog[key].items()}
 
 
 def get_coating(key: str) -> Coating:

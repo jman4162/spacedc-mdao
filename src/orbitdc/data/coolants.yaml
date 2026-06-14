@@ -21,7 +21,7 @@ ammonia_two_phase:
   fluid: "ammonia"
   mode: "two_phase"
   cp_j_kg_k: 4700.0
-  h_fg_j_kg: 1.37e6
+  h_fg_j_kg: 1370000.0
   delta_t_k: 3.0
   pump_power_fraction:
     value: 0.11

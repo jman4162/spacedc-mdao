@@ -12,12 +12,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, fields
 from functools import cache
-from importlib.resources import files
 from typing import Any, cast
 
-import yaml
-
 from orbitdc.core.assumptions import Assumption
+from orbitdc.core.catalog_loader import load_yaml as _load_yaml
+from orbitdc.core.catalog_loader import resolve as _resolve
 
 
 @dataclass(frozen=True)
@@ -32,6 +31,9 @@ class Accelerator:
     mem_bw_tb_s: float
     mass_kg: float
     unit_cost_usd: float
+    tid_tolerance_krad: float
+    seu_susceptibility: float
+    ecc_mitigation: float
 
 
 @dataclass(frozen=True)
@@ -83,19 +85,6 @@ _TYPES: dict[str, tuple[str, type]] = {
     "radiators": ("radiators.yaml", Radiator),
     "launch": ("launch.yaml", LaunchVehicle),
 }
-
-
-def _resolve(raw: Any) -> Any:
-    """Return the usable value of a field: the `value` of a provenance mapping, or the scalar."""
-    if isinstance(raw, dict) and "value" in raw:
-        return raw["value"]
-    return raw
-
-
-def _load_yaml(filename: str) -> dict[str, Any]:
-    text = (files("orbitdc.data") / filename).read_text()
-    data = yaml.safe_load(text)
-    return cast(dict[str, Any], data or {})
 
 
 @cache

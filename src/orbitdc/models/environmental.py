@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from orbitdc.core import catalog_loader
 from orbitdc.core.constants import HOURS_PER_YEAR
 
-# Default emission factors (lower confidence; order-of-magnitude).
-SPACECRAFT_EMBODIED_KG_PER_KG = 80.0  # kgCO2e per kg of spacecraft hardware
-SERVER_EMBODIED_KG_PER_KG = 60.0  # kgCO2e per kg of terrestrial hardware
-PROPELLANT_EF_KG_PER_KG = 3.0  # kgCO2e per kg propellant burned (+ manufacturing)
+# Emission factors from the provenance-tagged catalog (lower confidence).
+_EF = catalog_loader.entry("embodied_factors.yaml", "default")
+SPACECRAFT_EMBODIED_KG_PER_KG = _EF["spacecraft_embodied_kg_per_kg"]
+SERVER_EMBODIED_KG_PER_KG = _EF["server_embodied_kg_per_kg"]
+PROPELLANT_EF_KG_PER_KG = _EF["propellant_ef_kg_per_kg"]
 
 
 @dataclass(frozen=True)

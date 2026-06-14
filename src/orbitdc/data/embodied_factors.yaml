@@ -1,0 +1,25 @@
+# Embodied + launch carbon emission factors (EQUATIONS section 13).
+# Lower confidence than the physics; order-of-magnitude.
+
+default:
+  spacecraft_embodied_kg_per_kg:
+    value: 80.0
+    units: "kgCO2e/kg"
+    source: "Estimated embodied carbon of spacecraft hardware"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  server_embodied_kg_per_kg:
+    value: 60.0
+    units: "kgCO2e/kg"
+    source: "Estimated embodied carbon of terrestrial server hardware"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  propellant_ef_kg_per_kg:
+    value: 3.0
+    units: "kgCO2e/kg"
+    source: "Estimated launch emissions per kg propellant (+ manufacturing)"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"

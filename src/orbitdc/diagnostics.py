@@ -46,6 +46,10 @@ def binding_constraints(ev: Evaluation) -> list[str]:
     if ratio is not None and ratio > 1.0:
         notes.append(f"radiator area exceeds packaging budget by {(ratio - 1.0) * 100:.0f}%")
 
+    solar_ratio = ev.details.get("solar_packaging_ratio")
+    if solar_ratio is not None and solar_ratio > 1.0:
+        notes.append(f"solar array exceeds deployable budget by {(solar_ratio - 1.0) * 100:.0f}%")
+
     if ev.thermal_bottleneck is not None:
         m2_kw = ev.details.get("radiator_m2_per_kw")
         kg_kw = ev.details.get("thermal_kg_per_kw")
@@ -56,6 +60,14 @@ def binding_constraints(ev: Evaluation) -> list[str]:
         )
     for w in ev.thermal_warnings:
         notes.append(f"thermal caveat: {w}")
+
+    ttc_margin = ev.details.get("rf_ttc_margin_db")
+    if ttc_margin is not None and ttc_margin < 3.0:
+        notes.append(f"RF TT&C link margin is thin ({ttc_margin:.1f} dB)")
+
+    optical_avail = ev.details.get("optical_downlink_availability")
+    if optical_avail is not None and optical_avail < 1.0:
+        notes.append(f"optical downlink weather-limited to {optical_avail * 100:.0f}% availability")
 
     launches = ev.details.get("n_launches")
     if launches is not None and launches > 1.0:

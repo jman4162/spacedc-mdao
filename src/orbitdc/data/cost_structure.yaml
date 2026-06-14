@@ -1,0 +1,46 @@
+# Soft cost factors previously hardcoded in compare.py. Estimates; the
+# satellite bus and radiator unit costs are first-order cost drivers.
+
+default:
+  bus_cost_per_sat_usd:
+    value: 2000000.0
+    units: "USD/satellite"
+    source: "Order-of-magnitude bus + integration cost for a DC-class smallsat"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  comms_cost_per_sat_usd:
+    value: 500000.0
+    units: "USD/satellite"
+    source: "Estimated RF + optical terminal cost per satellite"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  ground_segment_usd:
+    value: 20000000.0
+    units: "USD"
+    source: "Estimated ground-segment capex (stations, ops center)"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  annual_ops_usd:
+    value: 5000000.0
+    units: "USD/yr"
+    source: "Estimated annual mission operations"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  earth_maintenance_frac:
+    value: 0.05
+    units: "fraction/yr"
+    source: "Typical terrestrial DC maintenance as a fraction of capex"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  radiator_cost_per_m2_usd:
+    value: 5000.0
+    units: "USD/m^2"
+    source: "Estimated space-qualified radiator panel cost"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"

@@ -36,11 +36,14 @@ class Architecture(BaseModel):
     satellites: int = Field(gt=0)
     accelerators_per_satellite: int = Field(gt=0)
     crosslink: str = "optical"
+    downlink_type: str = "optical"  # "optical" (weather-limited) or "rf"
     # Aggregate available link capacity for the constellation (Gbit/s).
     crosslink_gbps: float = Field(default=1.0e4, ge=0.0)
     downlink_gbps: float = Field(default=100.0, ge=0.0)
     # Radiator area that physically fits per satellite (packaging budget, m^2).
     radiator_area_m2_per_sat: float = Field(default=40.0, gt=0.0)
+    # Solar-array area that physically fits per satellite (deployable budget, m^2).
+    solar_area_m2_per_sat: float = Field(default=200.0, gt=0.0)
 
 
 class SpaceParams(BaseModel):
@@ -56,6 +59,8 @@ class SpaceParams(BaseModel):
     solar_array: str = "rigid_triple_junction"
     battery: str = "li_ion_generic"
     launch: str = "current_reusable"
+    # Launch-cost case: pulls a point from the launch catalog distribution.
+    launch_case: Literal["current", "pessimistic", "aggressive", "speculative"] = "current"
     # Thermal radiator co-design (Phase 2A).
     radiator_panel: str = "deployable_osr"
     coolant: str = "ammonia_single_phase"

@@ -1,0 +1,26 @@
+# Communications defaults: an S-band TT&C link budget and the optical-downlink
+# weather availability. TT&C must close with margin even when the main data
+# fabric is optical; optical ground links lose availability to clouds.
+
+default:
+  ttc_freq_hz:
+    value: 2200000000.0
+    units: "Hz"
+    source: "S-band TT&C"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "estimated"
+  ttc_tx_power_dbw: 3.0
+  ttc_sat_gain_dbi: 3.0
+  ttc_ground_aperture_m: 5.0
+  ttc_system_noise_temp_k: 300.0
+  ttc_data_rate_bps: 1000000.0
+  ttc_required_ebn0_db: 4.0
+  ttc_other_losses_db: 4.0
+  optical_downlink_availability:
+    value: 0.75
+    units: "fraction"
+    source: "Single-site optical ground link, cloud-limited; site diversity raises it"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"

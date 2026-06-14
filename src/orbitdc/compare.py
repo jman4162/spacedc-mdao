@@ -11,11 +11,13 @@ import math
 from dataclasses import replace
 
 from orbitdc import diagnostics
+from orbitdc.core import catalog_loader
 from orbitdc.core.registry import (
     get_accelerator,
     get_battery,
     get_launch,
     get_solar_array,
+    provenance,
 )
 from orbitdc.core.schema import Scenario
 from orbitdc.evaluation import Evaluation
@@ -27,25 +29,42 @@ from orbitdc.models import (
     network,
     orbit,
     power,
+    radiation,
     reliability,
+    rf,
 )
 from orbitdc.thermal import thermal_codesign
 from orbitdc.thermal.catalog import get_chip_stack, get_coolant, get_radiator_surface
 from orbitdc.thermal.presets import get_environment
 from orbitdc.waterfall import build_waterfall
 
-# Soft cost/mass factors not yet promoted to catalogs (estimates; Phase 1).
-PAYLOAD_FACTOR = 2.0  # board/chassis mass multiple over bare accelerators
-COMMS_MASS_PER_SAT_KG = 30.0
-AVIONICS_PROP_PER_SAT_KG = 60.0
-STRUCTURE_FRAC = 0.20
-MARGIN_FRAC = 0.20
-BUS_COST_PER_SAT_USD = 2.0e6
-COMMS_COST_PER_SAT_USD = 0.5e6
-GROUND_SEGMENT_USD = 20.0e6
-ANNUAL_OPS_USD = 5.0e6
-EARTH_MAINTENANCE_FRAC = 0.05
-RADIATOR_COST_PER_M2_USD = 5000.0  # space-qualified radiator panel
+# Soft cost/mass factors, loaded from provenance-tagged catalogs (Phase 3A).
+_MASS = catalog_loader.entry("mass_structure.yaml", "default")
+_COST = catalog_loader.entry("cost_structure.yaml", "default")
+PAYLOAD_FACTOR = _MASS["payload_factor"]
+COMMS_MASS_PER_SAT_KG = _MASS["comms_mass_per_sat_kg"]
+AVIONICS_PROP_PER_SAT_KG = _MASS["avionics_propulsion_per_sat_kg"]
+STRUCTURE_FRAC = _MASS["structure_frac"]
+MARGIN_FRAC = _MASS["margin_frac"]
+BUS_COST_PER_SAT_USD = _COST["bus_cost_per_sat_usd"]
+COMMS_COST_PER_SAT_USD = _COST["comms_cost_per_sat_usd"]
+GROUND_SEGMENT_USD = _COST["ground_segment_usd"]
+ANNUAL_OPS_USD = _COST["annual_ops_usd"]
+EARTH_MAINTENANCE_FRAC = _COST["earth_maintenance_frac"]
+RADIATOR_COST_PER_M2_USD = _COST["radiator_cost_per_m2_usd"]
+
+
+def _launch_cost_for_case(launch_key: str, case: str, nominal: float) -> float:
+    """Resolve launch $/kg for a scenario case from the catalog distribution."""
+    if case == "speculative":
+        return get_launch("aggressive_future").cost_per_kg_usd
+    prov = provenance("launch").get(launch_key, {}).get("cost_per_kg_usd")
+    if prov is not None:
+        if case == "pessimistic" and prov.high is not None:
+            return prov.high
+        if case == "aggressive" and prov.low is not None:
+            return prov.low
+    return nominal
 
 
 def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None) -> Evaluation:
@@ -53,6 +72,9 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     if scenario.kind != "space" or scenario.space is None:
         raise ValueError("evaluate_space requires a space scenario")
     o = overrides or {}
+    for key, val in o.items():
+        if not math.isfinite(val) or val < 0.0:
+            raise ValueError(f"override {key}={val!r} must be finite and non-negative")
     sp = scenario.space
     arch = sp.architecture
 
@@ -70,7 +92,9 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         array = replace(array, specific_power_w_per_kg=o["solar_specific_power_w_per_kg"])
     if "radiator_areal_mass_kg_per_m2" in o:
         surface = replace(surface, areal_density_kg_m2=o["radiator_areal_mass_kg_per_m2"])
-    launch_cost_per_kg = o.get("launch_cost_per_kg_usd", launch.cost_per_kg_usd)
+    base_launch_cost = _launch_cost_for_case(sp.launch, sp.launch_case, launch.cost_per_kg_usd)
+    launch_cost_per_kg = o.get("launch_cost_per_kg_usd", base_launch_cost)
+    radiator_cost_per_m2 = o.get("radiator_cost_per_m2_usd", RADIATOR_COST_PER_M2_USD)
     annual_failure_rate = o.get("annual_failure_rate", sp.annual_failure_rate)
     utilization = o.get("utilization", scenario.utilization)
     comm_intensity = o.get(
@@ -103,6 +127,12 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         battery=battery,
     )
 
+    # Power closure: if the sized array exceeds the deployable budget, the design
+    # is power-limited and compute throttles.
+    solar_area_available = arch.solar_area_m2_per_sat * n_sat
+    solar_packaging_ratio = pw.array_area_m2 / solar_area_available
+    f_power = min(1.0, 1.0 / solar_packaging_ratio)
+
     area_available = arch.radiator_area_m2_per_sat * n_sat
     th = thermal_codesign(
         q_waste_w=q_waste_w,
@@ -114,9 +144,20 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         eol=sp.thermal_eol,
     )
 
+    # Radiation: orbit + hardware tolerance add to the (non-radiation) base rate.
+    rad = radiation.radiation_failure_contribution(
+        altitude_km=sp.orbit.altitude_km,
+        inclination_deg=sp.orbit.inclination_deg or 0.0,
+        mission_years=scenario.mission_life_years,
+        tid_tolerance_krad=accel.tid_tolerance_krad,
+        seu_susceptibility=accel.seu_susceptibility,
+        ecc_mitigation=accel.ecc_mitigation,
+    )
+    effective_failure_rate = annual_failure_rate + rad.failure_rate_per_year
+
     rel = reliability.size_reliability(
         n_accelerators=n_accel,
-        annual_failure_rate=annual_failure_rate,
+        annual_failure_rate=effective_failure_rate,
         mission_years=scenario.mission_life_years,
         spare_fraction=sp.spare_fraction,
         reset_recovery_availability=sp.reset_recovery_availability,
@@ -126,18 +167,36 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     pre_network = (
         peak
         * scenario.sustained_fraction
-        * 1.0  # f_power (sized to load)
+        * f_power
         * th.f_thermal
         * rel.f_availability
         * utilization
     )
     net = network.size_network(pre_network, comm_intensity, downlink_gbps)
 
+    # Optical ground downlinks lose availability to weather; RF TT&C must close.
+    comms = catalog_loader.entry("comms.yaml", "default")
+    optical_availability = (
+        comms["optical_downlink_availability"] if arch.downlink_type == "optical" else 1.0
+    )
+    slant_range_m = sp.orbit.altitude_km * 1000.0 * 2.0  # rough low-elevation slant range
+    ttc_link = rf.link_margin(
+        tx_power_dbw=comms["ttc_tx_power_dbw"],
+        tx_gain_dbi=comms["ttc_sat_gain_dbi"],
+        rx_gain_dbi=rf.aperture_gain_dbi(comms["ttc_ground_aperture_m"], comms["ttc_freq_hz"]),
+        range_m=slant_range_m,
+        freq_hz=comms["ttc_freq_hz"],
+        system_noise_temp_k=comms["ttc_system_noise_temp_k"],
+        data_rate_bps=comms["ttc_data_rate_bps"],
+        required_ebn0_db=comms["ttc_required_ebn0_db"],
+        other_losses_db=comms["ttc_other_losses_db"],
+    )
+
     factors = {
         "software": scenario.sustained_fraction,
-        "power": 1.0,
+        "power": f_power,
         "thermal": th.f_thermal,
-        "network": net.f_network,
+        "network": net.f_network * optical_availability,
         "availability": rel.f_availability,
         "utilization": utilization,
     }
@@ -148,8 +207,8 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         n_accelerators=n_accel,
         accel_mass_kg=accel.mass_kg,
         payload_factor=PAYLOAD_FACTOR,
-        array_mass_kg=pw.array_mass_kg,
-        battery_mass_kg=pw.battery_mass_kg,
+        array_mass_kg=pw.array_mass_kg * f_power,
+        battery_mass_kg=pw.battery_mass_kg * f_power,
         radiator_mass_kg=th.panel_mass_kg + th.coolant_mass_kg,
         n_satellites=n_sat,
         comms_mass_per_sat_kg=COMMS_MASS_PER_SAT_KG,
@@ -188,9 +247,9 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         accel_unit_cost_usd=accel.unit_cost_usd,
         accel_mass_kg=accel.mass_kg,
         payload_factor=PAYLOAD_FACTOR,
-        array_cost_usd=pw.array_cost_usd,
-        battery_cost_usd=pw.battery_cost_usd,
-        radiator_cost_usd=th.area_installed_m2 * RADIATOR_COST_PER_M2_USD,
+        array_cost_usd=pw.array_cost_usd * f_power,
+        battery_cost_usd=pw.battery_cost_usd * f_power,
+        radiator_cost_usd=th.area_installed_m2 * radiator_cost_per_m2,
         n_satellites=n_sat,
         bus_cost_per_sat_usd=BUS_COST_PER_SAT_USD,
         comms_cost_per_sat_usd=COMMS_COST_PER_SAT_USD,
@@ -207,6 +266,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
 
     details: dict[str, float] = {
         "radiator_packaging_ratio": th.packaging_ratio,
+        "solar_packaging_ratio": solar_packaging_ratio,
         "radiator_area_required_m2": th.area_required_m2,
         "radiator_area_available_m2": th.area_available_m2,
         "radiator_t_rad_k": th.t_rad_k,
@@ -219,12 +279,18 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "thermal_feasible": float(th.feasible),
         "network_required_gbps": net.required_gbps,
         "network_available_gbps": net.available_gbps,
+        "rf_ttc_margin_db": ttc_link.margin_db,
+        "optical_downlink_availability": optical_availability,
         "n_launches": math.ceil(launch_mass_kg / launch.capacity_kg),
         "sunlit_fraction": orbit_state.sunlit_fraction,
         "eclipse_fraction": orbit_state.eclipse_fraction,
         "orbital_period_min": orbit_state.period_s / 60.0,
         "expected_failures": rel.expected_failures,
+        "tid_dose_krad": rad.tid_dose_krad,
+        "radiation_failure_rate": rad.failure_rate_per_year,
+        "total_failure_rate": effective_failure_rate,
         "station_keeping_deltav_ms": deltav_ms,
+        "launch_cost_per_kg_usd": launch_cost_per_kg,
         "propellant_mass_kg": propellant_kg,
         "co2e_per_pflop_day": env_result.co2e_per_pflop_day,
         "co2e_total_t": env_result.co2e_total_kg / 1000.0,

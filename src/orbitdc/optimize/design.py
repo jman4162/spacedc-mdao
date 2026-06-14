@@ -19,6 +19,7 @@ DESIGN_VARS: dict[str, tuple[str, float, float]] = {
     "launch_cost_per_kg": ("launch_cost_per_kg_usd", 200.0, 6000.0),
     "downlink_gbps": ("downlink_gbps", 50.0, 5000.0),
     "annual_failure_rate": ("annual_failure_rate", 0.01, 0.20),
+    "radiator_cost_per_m2": ("radiator_cost_per_m2_usd", 2000.0, 12000.0),
 }
 
 # name -> (extractor, sense) where sense is "min" or "max"

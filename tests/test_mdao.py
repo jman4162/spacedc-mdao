@@ -63,7 +63,8 @@ def test_doe_shape() -> None:
     assert doe.samples.shape[1] == len(doe.design_vars)
 
 
-def test_sobol_total_ge_first_order() -> None:
+def test_sobol_downlink_is_top_driver() -> None:
     sob = sobol_indices(_space(), "lcoc", n=16, seed=0)
-    # Total-order index should dominate; downlink is the known top driver.
-    assert sob.st["downlink_gbps"] >= 0.5
+    # Downlink is the dominant LCOC driver (network-limited design).
+    top = max(sob.st, key=lambda k: sob.st[k])
+    assert top == "downlink_gbps"

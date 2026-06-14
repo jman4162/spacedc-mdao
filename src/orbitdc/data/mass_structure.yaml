@@ -1,0 +1,38 @@
+# Soft mass factors previously hardcoded in compare.py. Estimates.
+
+default:
+  payload_factor:
+    value: 2.0
+    units: "ratio"
+    source: "Board/chassis mass multiple over bare accelerators"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  comms_mass_per_sat_kg:
+    value: 30.0
+    units: "kg/satellite"
+    source: "Estimated RF + optical terminal mass per satellite"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  avionics_propulsion_per_sat_kg:
+    value: 60.0
+    units: "kg/satellite"
+    source: "Estimated avionics + propulsion dry mass per satellite"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  structure_frac:
+    value: 0.20
+    units: "fraction"
+    source: "Structure as a fraction of subsystem mass (typical)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  margin_frac:
+    value: 0.20
+    units: "fraction"
+    source: "Mass margin policy (typical early-design)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"

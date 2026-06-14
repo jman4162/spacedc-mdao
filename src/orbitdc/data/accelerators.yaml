@@ -49,6 +49,21 @@ h100_sxm:
     date: "2026-06-13"
     confidence: "low"
     kind: "estimated"
+  tid_tolerance_krad:
+    value: 20.0
+    units: "krad"
+    source: "Commercial silicon is radiation-soft; estimate before TID degradation"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  seu_susceptibility: 1.0
+  ecc_mitigation:
+    value: 0.80
+    units: "fraction"
+    source: "HBM ECC + scrubbing mitigates most soft errors"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
 
 tpu_like:
   name: "Generic TPU-like accelerator"
@@ -84,6 +99,9 @@ tpu_like:
     date: "2026-06-13"
     confidence: "low"
     kind: "speculative"
+  tid_tolerance_krad: 30.0
+  seu_susceptibility: 0.8
+  ecc_mitigation: 0.85
 
 generic_asic:
   name: "Generic inference ASIC"
@@ -107,3 +125,6 @@ generic_asic:
     date: "2026-06-13"
     confidence: "low"
     kind: "speculative"
+  tid_tolerance_krad: 50.0
+  seu_susceptibility: 0.6
+  ecc_mitigation: 0.90
