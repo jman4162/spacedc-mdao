@@ -5,12 +5,24 @@ build-backend = "hatchling.build"
 [project]
 name = "spacedc-mdao"
 version = "0.4.0"
-description = "Multidisciplinary design analysis and optimization of orbital compute infrastructure, with terrestrial data-center baselines."
+description = "Skeptical, provenance-driven feasibility MDAO for orbital data centers vs Earth baselines."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "John Hodge" }]
-keywords = ["mdao", "orbital", "data-center", "space", "compute", "trade-study"]
+keywords = [
+    "mdao",
+    "orbital-data-center",
+    "space",
+    "data-center",
+    "feasibility",
+    "levelized-cost",
+    "lcoc",
+    "radiator",
+    "thermal",
+    "openmdao",
+    "trade-study",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -38,7 +50,7 @@ rf = ["opensatcom>=0.4.0"]
 # MDAO + optimization (Phase 2B). PymooDriver needs openmdao >= 3.44.
 mdao = ["openmdao>=3.44", "pymoo>=0.6", "SALib>=1.5"]
 # Interactive exploration dashboard (Phase 2C).
-viz = ["plotly>=6", "panel>=1.9", "networkx>=3"]
+viz = ["plotly>=6", "panel>=1.9", "networkx>=3", "kaleido>=0.2"]
 # Skyfield orbit propagation for ground-station access windows (Phase 2D).
 orbit = ["skyfield>=1.54"]
 dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
