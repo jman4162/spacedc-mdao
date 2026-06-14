@@ -25,6 +25,8 @@ dependencies = [
 # Tier-1 RF link-budget backend (opensatcom is John's MIT satcom library).
 # Phase 1 rf.py falls back to inline Friis/FSPL when this is not installed.
 rf = ["opensatcom>=0.4.0"]
+# MDAO + optimization (Phase 2B). PymooDriver needs openmdao >= 3.44.
+mdao = ["openmdao>=3.44", "pymoo>=0.6", "SALib>=1.5"]
 dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
 
 [project.scripts]
@@ -48,7 +50,15 @@ files = ["src"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["scipy.*", "matplotlib.*", "opensatcom.*", "pint.*"]
+module = [
+    "scipy.*",
+    "matplotlib.*",
+    "opensatcom.*",
+    "pint.*",
+    "openmdao.*",
+    "pymoo.*",
+    "SALib.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

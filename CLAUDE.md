@@ -2,13 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: Phase 1 done; Phase 2A (thermal) landed
+## Status: Phase 1 done; Phase 2A (thermal) + 2B (MDAO) landed
 
 The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + notebooks.
 
 **Phase 2A — thermal radiator co-design (`src/orbitdc/thermal/`)** replaced the Tier-0 radiator with a radiator-in-the-loop module: net radiator flux (emission minus absorbed solar/albedo/Earth-IR, EOL coatings), the chip-to-radiator resistance stack that bounds the radiator temperature, a coolant loop whose pump power feeds back as a bus load, a mass build-up, and a bottleneck classifier (chip/coolant/transport/radiator/orientation-limited). It carries catalogs (`coatings`, `coolants`, `chip_stacks`, `radiator_panels`) and validation anchors (ISS PVR/EATCS, Starcloud, NASA high-temp). `compare()` now surfaces T_rad, junction temp, m²/kW, kg/kW, and the bottleneck. See `examples/notebooks/02_radiator_feasibility.ipynb`. No new dependencies. Authoritative source: `background_information/THEMRAL_RADIATOR_DEEPDIVE.md`.
 
-Still deferred: 2B OpenMDAO + pymoo optimization, 2C plotly/Panel dashboard, 2D Skyfield orbit / opensatcom RF / environmental / multiple Earth baselines.
+**Phase 2B — MDAO + optimization (`src/orbitdc/mdao/`, `src/orbitdc/optimize/`, optional `[mdao]` extra)**: `OrbitDCComponent` wraps `evaluate_space` as an OpenMDAO `ExplicitComponent` (FD partials; `run_model` matches `evaluate_space` exactly); `optimize_single` does constrained gradient-free single-objective optimization (ScipyOptimizeDriver/COBYLA). Multi-objective Pareto is pymoo NSGA-II (`optimize/pareto.py`) called directly on the evaluator. `optimize/doe.py` is a scipy-QMC Latin-hypercube sweep; `optimize/sensitivity.py` adds SALib Sobol indices. Shared design-variable/objective spec in `optimize/design.py`. CLI: `orbitdc optimize <scenario> [--objective lcoc | --pareto lcoc,kg_per_kw]`. Note: the OpenMDAO Pareto driver class is `pymooDriver` (lowercase) with a thin API, so we use pymoo directly. `import orbitdc.mdao` requires the extra; the base package never imports it.
+
+Still deferred: 2C plotly/Panel dashboard, 2D Skyfield orbit / opensatcom RF / environmental / multiple Earth baselines.
 
 Key reference docs:
 
@@ -108,13 +110,14 @@ result.explain_binding_constraints()
 The project uses `uv` for environment and dependency management.
 
 ```bash
-uv sync --extra rf --extra dev     # create venv + install package with optional extras
+uv sync --extra dev --extra mdao   # create venv + install package with extras (add --extra rf as needed)
 uv run ruff check .                # lint
 uv run ruff format --check .       # formatting check (drop --check to apply)
 uv run mypy src                    # type-check (strict)
 uv run pytest                      # run the test suite
 uv run pytest tests/test_orbit.py -k eclipse   # run a single test
 uv run python -m orbitdc compare examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_hyperscale_baseline.yaml
+uv run orbitdc optimize examples/scenarios/orbital_1mw_inference.yaml --pareto lcoc,kg_per_kw   # needs [mdao]
 ```
 
 **Code-quality gate:** all code must pass `ruff check`, `ruff format`, and `mypy --strict` (configured over `src/`) before commit. CI (`.github/workflows/ci.yml`) enforces ruff + mypy + pytest; do not commit changes that break them.

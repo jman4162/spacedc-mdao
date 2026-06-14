@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
       - name: Sync
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra mdao
       - name: Ruff lint
         run: uv run ruff check .
       - name: Ruff format
