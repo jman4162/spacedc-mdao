@@ -11,6 +11,16 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "John Hodge" }]
 keywords = ["mdao", "orbital", "data-center", "space", "compute", "trade-study"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
 
 dependencies = [
     "pydantic>=2.0",
@@ -32,6 +42,13 @@ viz = ["plotly>=6", "panel>=1.9", "networkx>=3"]
 # Skyfield orbit propagation for ground-station access windows (Phase 2D).
 orbit = ["skyfield>=1.54"]
 dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
+# Documentation site (Phase 4D): MkDocs Material + API reference from docstrings.
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
+
+[project.urls]
+Repository = "https://github.com/jman4162/spacedc-mdao"
+Documentation = "https://jman4162.github.io/spacedc-mdao/"
+Changelog = "https://github.com/jman4162/spacedc-mdao/blob/main/CHANGELOG.md"
 
 [project.scripts]
 orbitdc = "orbitdc.cli:main"

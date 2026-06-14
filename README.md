@@ -4,7 +4,7 @@ A Python package for multidisciplinary design analysis and optimization (MDAO) o
 
 The package optimizes **delivered useful compute**, not nominal watts or nominal GPUs. It takes installed capacity and degrades it through power, thermal, network, reliability, and utilization limits, then reports where a design fails and which assumptions decide the outcome. Its job is to make the feasibility boundary visible, not to argue that space wins.
 
-See `SPEC.md` for the design contract and `background_information/EQUATIONS.md` for the governing equations.
+**Documentation:** <https://jman4162.github.io/spacedc-mdao/> (quick start, user tiers, model architecture, API reference, and a generated assumptions/provenance table). See `SPEC.md` for the design contract and `background_information/EQUATIONS.md` for the governing equations.
 
 ## Status
 

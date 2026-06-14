@@ -43,6 +43,13 @@ compute and reports the feasibility boundary; it is skeptical by default.
   capacity curve with launch-quantized resupply (sawtooth), exposed as
   `Evaluation.availability_curve`; behind `graceful_degradation`.
 
+### 4D — documentation site
+- MkDocs Material site (`docs/`, `mkdocs.yml`, `[docs]` extra): quick start, user
+  tiers, model architecture, embedded governing equations, an mkdocstrings API
+  reference, and an assumptions/provenance page generated from the catalogs at
+  build time. CI builds with `--strict` and deploys to GitHub Pages on `main`.
+- `pyproject` metadata for release: classifiers, `[project.urls]`.
+
 ## 0.3.0 — Phase 3
 
 ### 3A — credibility & provenance
