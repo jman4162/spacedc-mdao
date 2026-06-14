@@ -18,6 +18,8 @@ class Workload(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     type: str = "generic"
+    # Named workload preset (data/workloads.yaml); supplies comm intensity if set.
+    workload_type: str | None = None
     # bits moved off-accelerator per FLOP of delivered compute; drives the network limit.
     comm_intensity_bits_per_flop: float = Field(default=1e-3, ge=0.0)
 
@@ -53,6 +55,8 @@ class SpaceParams(BaseModel):
     architecture: Architecture
     # Non-accelerator IT draw (CPU/memory/network/storage) as a fraction of accelerator TDP.
     it_power_overhead_frac: float = Field(default=0.25, ge=0.0)
+    # Average/peak load ratio; <1 sizes power+thermal for a bursty workload's average.
+    duty_cycle_fraction: float = Field(default=1.0, gt=0.0, le=1.0)
     # Spacecraft housekeeping (avionics/comms/pumps/heaters) as a fraction of IT power.
     non_it_power_frac: float = Field(default=0.10, ge=0.0)
     # Catalog keys.
@@ -67,6 +71,8 @@ class SpaceParams(BaseModel):
     chip_stack: str = "h100_direct_liquid"
     thermal_environment: str = "conservative_leo"
     thermal_eol: bool = True
+    # "steady" (worst-case) or "transient" (orbit-averaged, duty-cycle aware).
+    thermal_fidelity: Literal["steady", "transient"] = "steady"
     # Reliability.
     annual_failure_rate: float = Field(default=0.05, ge=0.0)
     spare_fraction: float = Field(default=0.0, ge=0.0)

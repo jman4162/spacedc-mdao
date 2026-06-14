@@ -1,0 +1,39 @@
+# Workload library: communication intensity (bits moved off-accelerator per FLOP
+# of delivered compute). The SPEC's space-native vs Earth-dependent distinction.
+# Written as plain decimals (PyYAML parses unsigned-exponent floats as strings).
+
+llm_inference:
+  comm_intensity_bits_per_flop:
+    value: 0.000002
+    units: "bits/FLOP"
+    source: "Compact token output; mostly Earth-bound but light I/O"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+
+llm_training:
+  comm_intensity_bits_per_flop:
+    value: 0.0001
+    units: "bits/FLOP"
+    source: "Gradient/parameter exchange is heavy; Earth-dependent, comms-bound"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+
+earth_observation:
+  comm_intensity_bits_per_flop:
+    value: 0.0000005
+    units: "bits/FLOP"
+    source: "Space-native: process imagery onboard, downlink compact products"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+
+edge_preprocessing:
+  comm_intensity_bits_per_flop:
+    value: 0.000001
+    units: "bits/FLOP"
+    source: "Space-native compression/event detection; compact output"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"

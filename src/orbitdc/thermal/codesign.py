@@ -56,11 +56,18 @@ def thermal_codesign(
     env: ThermalEnvironment,
     area_available_m2: float,
     eol: bool = True,
+    t_rad_override: float | None = None,
 ) -> ThermalCodesignResult:
-    """Solve the coupled chip->radiator thermal design and size area + mass."""
+    """Solve the coupled chip->radiator thermal design and size area + mass.
+
+    `t_rad_override` (if given) caps the radiator temperature below the junction
+    ceiling — running cooler costs area but eases the chip thermal margin.
+    """
     # 1. Radiator temperature: as hot as the junction allows, capped by material.
     t_rad_ceiling = network.max_radiator_temp_k(chip_stack)
     t_rad = min(t_rad_ceiling, surface.max_temp_k)
+    if t_rad_override is not None:
+        t_rad = min(t_rad, t_rad_override)
     junction_capped = t_rad_ceiling < surface.max_temp_k
     t_junction = network.junction_temperature_k(t_rad, chip_stack)
 

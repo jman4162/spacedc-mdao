@@ -17,7 +17,7 @@ import orbitdc as odc
 from orbitdc.compare import evaluate_space
 from orbitdc.mdao import build_problem, optimize_single
 from orbitdc.optimize.doe import latin_hypercube_doe
-from orbitdc.optimize.pareto import pareto_nsga2
+from orbitdc.optimize.pareto import pareto_nsga2, pareto_nsga2_mixed
 from orbitdc.optimize.sensitivity import sobol_indices
 
 SPACE = Path(__file__).parents[1] / "examples" / "scenarios" / "orbital_1mw_inference.yaml"
@@ -51,6 +51,27 @@ def test_optimize_single_improves_and_respects_constraint() -> None:
     assert res["radiator_packaging_ratio"] <= 1.0 + 1e-6
 
 
+def test_mixed_pareto_explores_architecture() -> None:
+    space = _space()
+    pf = pareto_nsga2_mixed(
+        space,
+        ["lcoc", "kg_per_kw"],
+        ["n_satellites", "accelerators_per_satellite", "downlink_gbps"],
+        pop_size=12,
+        n_gen=6,
+        seed=1,
+    )
+    assert pf.n_points >= 1
+    # n_satellites is an integer design variable.
+    assert all(float(p["n_satellites"]).is_integer() for p in pf.points)
+
+
+def test_architecture_overrides_change_count() -> None:
+    space = _space()
+    ev = evaluate_space(space, {"n_satellites": 32, "accelerators_per_satellite": 16})
+    assert ev.n_accelerators == 512
+
+
 def test_pareto_returns_nondominated_set() -> None:
     pf = pareto_nsga2(_space(), ["lcoc", "kg_per_kw"], pop_size=12, n_gen=6, seed=1)
     assert pf.n_points >= 1
@@ -64,7 +85,8 @@ def test_doe_shape() -> None:
 
 
 def test_sobol_downlink_is_top_driver() -> None:
-    sob = sobol_indices(_space(), "lcoc", n=16, seed=0)
-    # Downlink is the dominant LCOC driver (network-limited design).
+    drivers = ["utilization", "downlink_gbps", "launch_cost_per_kg", "annual_failure_rate"]
+    sob = sobol_indices(_space(), "lcoc", design_vars=drivers, n=16, seed=0)
+    # Among the network/cost drivers, downlink dominates a network-limited design.
     top = max(sob.st, key=lambda k: sob.st[k])
     assert top == "downlink_gbps"

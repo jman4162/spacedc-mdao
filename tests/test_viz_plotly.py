@@ -70,4 +70,18 @@ def test_dashboard_builds() -> None:
         odc.load_scenario(SCEN / "orbital_1mw_inference.yaml"),
         odc.load_scenario(SCEN / "earth_hyperscale_baseline.yaml"),
     )
-    assert len(dash) == 3  # three tabs
+    assert len(dash) == 4  # overview / thermal / uncertainty / provenance
+
+
+def test_phase3b_figures_build() -> None:
+    from plotly.graph_objects import Figure
+
+    from orbitdc.compare import scenario_transient
+
+    result = _result()
+    space = odc.load_scenario(SCEN / "orbital_1mw_inference.yaml")
+    mc = result.monte_carlo(n=32)
+    assert isinstance(pf.cost_waterfall(result.space), Figure)
+    assert isinstance(pf.monte_carlo_fan(mc, result.earth.lcoc_per_pflop_day), Figure)
+    assert isinstance(pf.orbit_timeline(scenario_transient(space)), Figure)
+    assert isinstance(pf.link_budget_heatmap(), Figure)

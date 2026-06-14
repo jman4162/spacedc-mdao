@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from orbitdc.compare import compare
+from orbitdc.compare import compare, scenario_transient
 from orbitdc.core.schema import Scenario
 from orbitdc.thermal.catalog import get_chip_stack, get_radiator_surface
 from orbitdc.thermal.presets import get_environment
@@ -31,9 +31,15 @@ def build_dashboard(space: Scenario, earth: Scenario) -> pn.Tabs:
     overview = pn.Column(
         pn.pane.Markdown(f"### {result.summary().splitlines()[0]}"),
         pn.pane.Plotly(pf.delivered_waterfall(ev)),
-        pn.pane.Plotly(pf.cost_breakdown(ev)),
+        pn.pane.Plotly(pf.cost_waterfall(ev)),
         pn.pane.Plotly(pf.mass_treemap(ev)),
         pn.pane.Plotly(pf.power_sankey(ev)),
+    )
+
+    mc = result.monte_carlo(n=300)
+    uncertainty = pn.Column(
+        pn.pane.Plotly(pf.monte_carlo_fan(mc, result.earth.lcoc_per_pflop_day)),
+        pn.pane.Plotly(pf.link_budget_heatmap()),
     )
 
     assert space.space is not None
@@ -50,8 +56,14 @@ def build_dashboard(space: Scenario, earth: Scenario) -> pn.Tabs:
         pn.pane.Plotly(pf.thermal_area_vs_temp(q_waste, surface, env)),
         pn.pane.Plotly(pf.net_flux_waterfall(t_rad, surface, env)),
         pn.pane.Plotly(pf.chip_temperature_ladder(t_rad, stack)),
+        pn.pane.Plotly(pf.orbit_timeline(scenario_transient(space))),
     )
 
     provenance = pn.Column(pn.pane.Plotly(provenance_table()))
 
-    return pn.Tabs(("Overview", overview), ("Thermal", thermal), ("Provenance", provenance))
+    return pn.Tabs(
+        ("Overview", overview),
+        ("Thermal", thermal),
+        ("Uncertainty", uncertainty),
+        ("Provenance", provenance),
+    )

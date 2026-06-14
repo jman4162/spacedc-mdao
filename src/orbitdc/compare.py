@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from orbitdc import diagnostics
+
+if TYPE_CHECKING:
+    from orbitdc.optimize.uncertainty import MonteCarloResult
 from orbitdc.core import catalog_loader
 from orbitdc.core.registry import (
     get_accelerator,
@@ -36,6 +40,7 @@ from orbitdc.models import (
 from orbitdc.thermal import thermal_codesign
 from orbitdc.thermal.catalog import get_chip_stack, get_coolant, get_radiator_surface
 from orbitdc.thermal.presets import get_environment
+from orbitdc.thermal.transient import TransientResult, transient_orbit
 from orbitdc.waterfall import build_waterfall
 
 # Soft cost/mass factors, loaded from provenance-tagged catalogs (Phase 3A).
@@ -52,6 +57,7 @@ GROUND_SEGMENT_USD = _COST["ground_segment_usd"]
 ANNUAL_OPS_USD = _COST["annual_ops_usd"]
 EARTH_MAINTENANCE_FRAC = _COST["earth_maintenance_frac"]
 RADIATOR_COST_PER_M2_USD = _COST["radiator_cost_per_m2_usd"]
+ALUMINUM_CP_J_PER_KG_K = 900.0  # radiator thermal capacitance (specific heat)
 
 
 def _launch_cost_for_case(launch_key: str, case: str, nominal: float) -> float:
@@ -97,23 +103,32 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     radiator_cost_per_m2 = o.get("radiator_cost_per_m2_usd", RADIATOR_COST_PER_M2_USD)
     annual_failure_rate = o.get("annual_failure_rate", sp.annual_failure_rate)
     utilization = o.get("utilization", scenario.utilization)
-    comm_intensity = o.get(
-        "comm_intensity_bits_per_flop", scenario.workload.comm_intensity_bits_per_flop
-    )
+    wl = scenario.workload
+    if wl.workload_type and "comm_intensity_bits_per_flop" not in wl.model_fields_set:
+        base_comm = catalog_loader.entry("workloads.yaml", wl.workload_type)[
+            "comm_intensity_bits_per_flop"
+        ]
+    else:
+        base_comm = wl.comm_intensity_bits_per_flop
+    comm_intensity = o.get("comm_intensity_bits_per_flop", base_comm)
     downlink_gbps = o.get("downlink_gbps", arch.downlink_gbps)
+    # Architecture overrides (used by mixed-integer optimization).
+    n_sat = int(o.get("n_satellites", arch.satellites))
+    accel_per_sat = int(o.get("accelerators_per_satellite", arch.accelerators_per_satellite))
+    altitude_km = o.get("altitude_km", sp.orbit.altitude_km)
+    t_rad_setpoint = o.get("radiator_t_rad_setpoint_k")
 
-    n_accel = scenario.n_accelerators
-    n_sat = arch.satellites
-
+    n_accel = n_sat * accel_per_sat
     peak = n_accel * accel.peak_tflops_dense
     it_power_w = n_accel * accel.tdp_w * (1.0 + sp.it_power_overhead_frac)
 
-    orbit_state = orbit.orbit_state(sp.orbit.altitude_km, sp.beta_deg)
+    orbit_state = orbit.orbit_state(altitude_km, sp.beta_deg)
 
     # Thermal pump power is a bus load: q_waste includes pump dissipation, so the
     # array carries IT + housekeeping + pump. Solve the small fixed point directly.
     pump_frac = coolant.pump_power_fraction
-    base_load_w = it_power_w * (1.0 + sp.non_it_power_frac)
+    # Duty cycle sizes power+thermal for the bursty workload's average load.
+    base_load_w = it_power_w * sp.duty_cycle_fraction * (1.0 + sp.non_it_power_frac)
     q_waste_w = base_load_w / (1.0 - pump_frac)
     non_it_effective = q_waste_w / it_power_w - 1.0
 
@@ -142,11 +157,12 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         env=thermal_env,
         area_available_m2=area_available,
         eol=sp.thermal_eol,
+        t_rad_override=t_rad_setpoint,
     )
 
     # Radiation: orbit + hardware tolerance add to the (non-radiation) base rate.
     rad = radiation.radiation_failure_contribution(
-        altitude_km=sp.orbit.altitude_km,
+        altitude_km=altitude_km,
         inclination_deg=sp.orbit.inclination_deg or 0.0,
         mission_years=scenario.mission_life_years,
         tid_tolerance_krad=accel.tid_tolerance_krad,
@@ -163,12 +179,29 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         reset_recovery_availability=sp.reset_recovery_availability,
     )
 
+    # Transient thermal (optional): orbit-averaging relaxes the worst-case limit
+    # because eclipse phases reject more heat than the hot sunlit phase.
+    f_thermal_used = th.f_thermal
+    if sp.thermal_fidelity == "transient" and th.feasible:
+        tr = transient_orbit(
+            q_waste_w=q_waste_w,
+            area_m2=th.area_installed_m2,
+            surface=surface,
+            env=thermal_env,
+            period_s=orbit_state.period_s,
+            sunlit_fraction=orbit_state.sunlit_fraction,
+            t_rad_target_k=th.t_rad_k,
+            thermal_capacitance_j_per_k=th.thermal_mass_kg * ALUMINUM_CP_J_PER_KG_K,
+            freeze_temp_k=coolant.freeze_temp_k,
+        )
+        f_thermal_used = tr.avg_throttle
+
     # Compute available before the network limit, then size the network on it.
     pre_network = (
         peak
         * scenario.sustained_fraction
         * f_power
-        * th.f_thermal
+        * f_thermal_used
         * rel.f_availability
         * utilization
     )
@@ -195,7 +228,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     factors = {
         "software": scenario.sustained_fraction,
         "power": f_power,
-        "thermal": th.f_thermal,
+        "thermal": f_thermal_used,
         "network": net.f_network * optical_availability,
         "availability": rel.f_availability,
         "utilization": utilization,
@@ -220,7 +253,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     # Station-keeping: propellant to offset drag over the mission.
     drag_area = sp.drag_area_m2_per_sat * n_sat
     deltav_ms = (
-        orbit.drag_deltav_per_year_ms(sp.orbit.altitude_km, drag_area, ms.dry_mass_kg)
+        orbit.drag_deltav_per_year_ms(altitude_km, drag_area, ms.dry_mass_kg)
         * scenario.mission_life_years
     )
     propellant_kg = orbit.station_keeping_propellant_kg(
@@ -419,6 +452,12 @@ class ComparisonResult:
     def space_beats_earth(self) -> bool:
         return self.space.lcoc_per_pflop_day < self.earth.lcoc_per_pflop_day
 
+    def monte_carlo(self, n: int = 500, seed: int = 0) -> MonteCarloResult:
+        """Monte Carlo over the default drivers vs this Earth baseline (for the fan chart)."""
+        from orbitdc.optimize.uncertainty import monte_carlo as _mc
+
+        return _mc(self._space_scenario, self.earth.lcoc_per_pflop_day, n=n, seed=seed)
+
     def thresholds(self) -> dict[str, float | None]:
         """Solve for the driver values at which space LCOC equals Earth LCOC."""
 
@@ -463,6 +502,34 @@ class ComparisonResult:
             f"Verdict: {verdict} on LCOC (space/earth = {ratio:.2f}x)",
         ]
         return "\n".join(rows)
+
+
+def scenario_transient(scenario: Scenario) -> TransientResult:
+    """Build the orbit-transient thermal series for a space scenario (for viz)."""
+    if scenario.kind != "space" or scenario.space is None:
+        raise ValueError("scenario_transient requires a space scenario")
+    sp = scenario.space
+    ev = evaluate_space(scenario)
+    surface = get_radiator_surface(sp.radiator_panel)
+    thermal_env = get_environment(sp.thermal_environment)
+    coolant = get_coolant(sp.coolant)
+    o_state = orbit.orbit_state(sp.orbit.altitude_km, sp.beta_deg)
+    q_waste = ev.details["bus_load_w"]
+    area_installed = min(
+        ev.details["radiator_area_required_m2"], ev.details["radiator_area_available_m2"]
+    )
+    thermal_mass = ev.details["thermal_kg_per_kw"] * q_waste / 1000.0
+    return transient_orbit(
+        q_waste_w=q_waste,
+        area_m2=area_installed,
+        surface=surface,
+        env=thermal_env,
+        period_s=o_state.period_s,
+        sunlit_fraction=o_state.sunlit_fraction,
+        t_rad_target_k=ev.details["radiator_t_rad_k"],
+        thermal_capacitance_j_per_k=thermal_mass * ALUMINUM_CP_J_PER_KG_K,
+        freeze_temp_k=coolant.freeze_temp_k,
+    )
 
 
 def compare(space: Scenario, earth: Scenario) -> ComparisonResult:
