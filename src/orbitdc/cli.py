@@ -132,6 +132,9 @@ def _sobol(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="orbitdc", description=__doc__)
     parser.add_argument("--version", action="version", version=f"orbitdc {__version__}")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="log intermediate values (DEBUG)"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     cmp_p = sub.add_parser("compare", help="compare a space scenario against an earth baseline")
@@ -176,8 +179,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    import logging
+
     parser = build_parser()
     args = parser.parse_args(argv)
+    if getattr(args, "verbose", False):
+        logging.basicConfig(level=logging.DEBUG, format="%(name)s %(levelname)s: %(message)s")
     func = args.func
     result: int = func(args)
     return result

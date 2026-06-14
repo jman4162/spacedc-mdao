@@ -24,3 +24,10 @@ default:
     date: "2026-06-13"
     confidence: "low"
     kind: "estimated"
+  # Optical inter-satellite crosslink terminal (drives the derived crosslink capacity).
+  crosslink_tx_power_w: 5.0
+  crosslink_aperture_m: 0.08
+  crosslink_wavelength_m: 0.00000155
+  crosslink_pointing_error_rad: 0.000001
+  crosslink_dwdm_channels: 16
+  crosslink_rx_sensitivity_photons_per_bit: 100.0

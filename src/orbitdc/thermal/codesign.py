@@ -45,6 +45,8 @@ class ThermalCodesignResult:
     kg_per_kw: float
     bottleneck: str
     warnings: tuple[str, ...]
+    hbm_margin_k: float | None = None
+    hbm_limited: bool = False
 
 
 def thermal_codesign(
@@ -122,11 +124,20 @@ def thermal_codesign(
     base = panel_mass + coolant_res.total_mass_kg
     thermal_mass = base * (1.0 + STRUCTURE_FRAC + DEPLOYMENT_FRAC + MARGIN_FRAC)
 
+    # HBM is the temperature-sensitive subsystem; when its limit is below the
+    # junction limit it sets the (cooler) radiator temperature, so the design is
+    # HBM-limited and the margin is measured to the HBM limit.
+    hbm_margin = network.hbm_margin_k(t_rad, chip_stack)
+    hbm_limited = (
+        chip_stack.hbm_limit_k is not None and chip_stack.hbm_limit_k < chip_stack.tj_max_k
+    )
+
     bottleneck = diagnosis.classify_bottleneck(
         junction_capped=junction_capped,
         packaging_ratio=packaging_ratio,
         absorbed_fraction=absorbed_fraction,
         pump_power_fraction=coolant.pump_power_fraction,
+        hbm_limited=hbm_limited,
     )
 
     return ThermalCodesignResult(
@@ -153,4 +164,6 @@ def thermal_codesign(
                 eol_used=eol, sun_incidence_cos=env.sun_incidence_cos, sides=surface.sides
             )
         ),
+        hbm_margin_k=hbm_margin,
+        hbm_limited=hbm_limited,
     )

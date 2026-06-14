@@ -52,12 +52,14 @@ def test_coating_eol_worse_than_bol() -> None:
     assert osr.eps(eol=True) <= osr.eps(eol=False)
 
 
-def test_junction_stack_sets_radiator_ceiling() -> None:
+def test_chip_stack_sets_radiator_ceiling() -> None:
     stack = get_chip_stack("h100_direct_liquid", chip_power_w=700.0)
-    # T_rad_max = Tj_max - Q*R_total; junction at that T_rad equals Tj_max.
+    # The radiator ceiling is set by the tighter of junction and HBM limits;
+    # for the H100 the HBM limit binds, so the junction lands at the HBM limit.
     t_rad_max = max_radiator_temp_k(stack)
-    assert math.isclose(junction_temperature_k(t_rad_max, stack), stack.tj_max_k, rel_tol=1e-9)
-    assert t_rad_max < stack.tj_max_k
+    binding_limit = min(stack.tj_max_k, stack.hbm_limit_k or stack.tj_max_k)
+    assert math.isclose(junction_temperature_k(t_rad_max, stack), binding_limit, rel_tol=1e-9)
+    assert t_rad_max < binding_limit
 
 
 def test_coolant_pump_power_is_fraction_of_q() -> None:
@@ -66,7 +68,7 @@ def test_coolant_pump_power_is_fraction_of_q() -> None:
     assert math.isclose(res.pump_power_w, loop.pump_power_fraction * 1.0e6, rel_tol=1e-12)
 
 
-def test_codesign_one_mw_chip_limited() -> None:
+def test_codesign_one_mw_hbm_limited() -> None:
     stack = get_chip_stack("h100_direct_liquid", chip_power_w=700.0)
     coolant = get_coolant("ammonia_single_phase")
     surface = get_radiator_surface("deployable_osr")
@@ -80,7 +82,9 @@ def test_codesign_one_mw_chip_limited() -> None:
         area_available_m2=5000.0,
     )
     assert res.feasible
-    assert res.bottleneck == diagnosis.CHIP_LIMITED  # junction sets T_rad
+    # The H100 HBM limit (368 K) is below its junction limit (393 K), so HBM binds.
+    assert res.bottleneck == diagnosis.HBM_LIMITED
+    assert res.hbm_limited
     assert res.t_rad_k < surface.max_temp_k
     # Thermal mass is a real burden: order tonnes per MW.
     assert 5.0 < res.kg_per_kw < 40.0

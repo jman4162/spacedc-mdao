@@ -3,6 +3,17 @@
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
 compute and reports the feasibility boundary; it is skeptical by default.
 
+## Unreleased — Phase 4 (in progress)
+
+### 4A — credibility & validation
+- HBM thermal limit wired into the radiator-temperature ceiling and bottleneck
+  diagnosis (`hbm-limited`); the demo H100 is HBM-limited.
+- Crosslink bandwidth derived from formation geometry + an optical link budget
+  (`models/comms_link.py`); `crosslink_gbps` is now an explicit override.
+- Reproduce Google Suncatcher and McCalip references from the model
+  (`tests/test_references.py`); `calibrate.fit_parameter` Tier-4 harness.
+- `logging` + `orbitdc --verbose`.
+
 ## 0.3.0 — Phase 3
 
 ### 3A — credibility & provenance

@@ -69,6 +69,13 @@ def binding_constraints(ev: Evaluation) -> list[str]:
     if optical_avail is not None and optical_avail < 1.0:
         notes.append(f"optical downlink weather-limited to {optical_avail * 100:.0f}% availability")
 
+    crosslink_factor = ev.details.get("crosslink_factor")
+    if crosslink_factor is not None and crosslink_factor < 0.999:
+        cap = ev.details.get("crosslink_capacity_gbps", 0.0)
+        notes.append(
+            f"crosslink-limited: {cap:,.0f} Gbps caps compute to {crosslink_factor * 100:.0f}%"
+        )
+
     launches = ev.details.get("n_launches")
     if launches is not None and launches > 1.0:
         notes.append(f"requires ~{launches:.0f} launches at the chosen vehicle capacity")

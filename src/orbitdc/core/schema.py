@@ -39,7 +39,9 @@ class Architecture(BaseModel):
     accelerators_per_satellite: int = Field(gt=0)
     crosslink: str = "optical"
     downlink_type: str = "optical"  # "optical" (weather-limited) or "rf"
-    # Aggregate available link capacity for the constellation (Gbit/s).
+    # Inter-satellite separation; drives the derived crosslink capacity and Δv.
+    formation_separation_m: float = Field(default=1000.0, gt=0.0)
+    # Aggregate crosslink capacity (Gbit/s); derived from geometry unless set here.
     crosslink_gbps: float = Field(default=1.0e4, ge=0.0)
     downlink_gbps: float = Field(default=100.0, ge=0.0)
     # Radiator area that physically fits per satellite (packaging budget, m^2).

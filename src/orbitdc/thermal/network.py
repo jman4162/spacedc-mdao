@@ -17,12 +17,15 @@ def junction_temperature_k(t_rad_k: float, stack: ChipThermalStack) -> float:
 
 
 def max_radiator_temp_k(stack: ChipThermalStack, *, use_design_limit: bool = False) -> float:
-    """Highest radiator temperature that keeps the junction within its limit.
+    """Highest radiator temperature that keeps the chip within its limits.
 
-    T_rad_max = Tj_limit - Q_chip * R_total. Lower => larger radiator area.
+    T_rad_max = T_limit - Q_chip * R_total, where T_limit is the tighter of the
+    junction and HBM limits. Lower => larger radiator area. HBM is typically the
+    binding subsystem, so it sets a cooler radiator.
     """
     tj_limit = stack.tj_design_k if use_design_limit else stack.tj_max_k
-    return tj_limit - stack.chip_power_w * stack.r_total
+    limit = tj_limit if stack.hbm_limit_k is None else min(tj_limit, stack.hbm_limit_k)
+    return limit - stack.chip_power_w * stack.r_total
 
 
 def hbm_margin_k(t_rad_k: float, stack: ChipThermalStack) -> float | None:

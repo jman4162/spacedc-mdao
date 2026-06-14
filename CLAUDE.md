@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: Phases 1–3 complete
+## Status: Phases 1–3 complete; Phase 4A landed
 
 The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + notebooks.
 
@@ -21,6 +21,8 @@ Phase 2 is complete. Extras: `[mdao]`, `[viz]`, `[orbit]`, `[rf]`. The base inst
 **Phase 3C — UX, reporting, hygiene.** CLI gained `provenance`, `doe`, `sobol`, and `--version`, plus friendly scenario-load errors (`cli._load`). `Evaluation.to_dict()`/`to_json()`; `list_catalogs()` and `export_report` exported from the package root. `reporting.py` writes a shareable HTML (plotly figures + narrative) or Markdown report with git commit + timestamp + scenario. Added `py.typed`, `LICENSE`, `CHANGELOG.md`; version bumped to **0.3.0**; CI gained an editable-install loop guard (the flakiness was uv skipping the editable rebuild when the version was unchanged — `--reinstall-package spacedc-mdao` forces it). Notebook ladder: `00_quick_start`, `03_pareto_exploration`, `04_monte_carlo_uncertainty` (+ existing 01/02).
 
 Phase 3 is complete. The package is a credible, provenance-driven, optimizable exploration environment. Extras: `[mdao]`, `[viz]`, `[orbit]`, `[rf]`.
+
+**Phase 4A — credibility & validation.** The HBM limit is wired in: `thermal/network.max_radiator_temp_k` now uses the tighter of the junction and HBM limits, so the demo H100 is **HBM-limited** (radiator runs cooler at ~312 K, thermal mass up to ~18 kg/kW); `thermal/diagnosis` has an `hbm-limited` label. Crosslink bandwidth is **derived** from formation geometry via `models/comms_link.crosslink_capacity` (modem-capped, photon-limited at long range — reproduces Suncatcher's ~12.8 Tbps per aperture); `Architecture.formation_separation_m` drives it, the scalar `crosslink_gbps` is now an explicit override, and crosslink folds into the network factor. `tests/test_references.py` reproduces Suncatcher (crosslink, <$200/kg launch) and McCalip (orbital several× costlier) from the model. `calibrate.fit_parameter` (scipy least-squares → provenance-tagged `Assumption`) is the Tier-4 entry point. `logging` + `orbitdc --verbose` trace intermediate values. Still to do: 4B (breadth), 4C (deepen physics), 4D (docs site), 4E (PyPI release).
 
 Key reference docs:
 

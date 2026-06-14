@@ -9,6 +9,7 @@ from __future__ import annotations
 
 # Bottleneck labels.
 CHIP_LIMITED = "chip-limited"
+HBM_LIMITED = "hbm-limited"
 COOLANT_LIMITED = "coolant-limited"
 TRANSPORT_LIMITED = "transport-limited"
 RADIATOR_LIMITED = "radiator-limited"
@@ -21,6 +22,7 @@ def classify_bottleneck(
     packaging_ratio: float,
     absorbed_fraction: float,
     pump_power_fraction: float,
+    hbm_limited: bool = False,
 ) -> str:
     """Return the dominant thermal bottleneck.
 
@@ -29,7 +31,10 @@ def classify_bottleneck(
     - packaging_ratio: required area / available area (>1 means it does not fit).
     - absorbed_fraction: absorbed environment / gross emission (orientation).
     - pump_power_fraction: parasitic transport power / waste heat.
+    - hbm_limited: the HBM temperature limit is exceeded (the sensitive subsystem).
     """
+    if hbm_limited:
+        return HBM_LIMITED
     if packaging_ratio > 1.0 and junction_capped:
         return CHIP_LIMITED
     if packaging_ratio > 1.0:

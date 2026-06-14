@@ -7,6 +7,7 @@ parameter thresholds at which space would match Earth.
 
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import replace
 from typing import TYPE_CHECKING
@@ -26,6 +27,7 @@ from orbitdc.core.registry import (
 from orbitdc.core.schema import Scenario
 from orbitdc.evaluation import Evaluation
 from orbitdc.models import (
+    comms_link,
     cost,
     earth_baseline,
     environmental,
@@ -58,6 +60,8 @@ ANNUAL_OPS_USD = _COST["annual_ops_usd"]
 EARTH_MAINTENANCE_FRAC = _COST["earth_maintenance_frac"]
 RADIATOR_COST_PER_M2_USD = _COST["radiator_cost_per_m2_usd"]
 ALUMINUM_CP_J_PER_KG_K = 900.0  # radiator thermal capacitance (specific heat)
+
+logger = logging.getLogger("orbitdc")
 
 
 def _launch_cost_for_case(launch_key: str, case: str, nominal: float) -> float:
@@ -212,6 +216,25 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     optical_availability = (
         comms["optical_downlink_availability"] if arch.downlink_type == "optical" else 1.0
     )
+
+    # Crosslink capacity derived from formation geometry + the optical link budget
+    # (unless the scenario set crosslink_gbps explicitly). Internal traffic that
+    # exceeds it throttles compute too.
+    if "crosslink_gbps" in arch.model_fields_set:
+        crosslink_gbps = arch.crosslink_gbps
+    else:
+        crosslink_gbps = comms_link.crosslink_capacity(
+            separation_m=arch.formation_separation_m,
+            tx_power_w=comms["crosslink_tx_power_w"],
+            tx_aperture_m=comms["crosslink_aperture_m"],
+            rx_aperture_m=comms["crosslink_aperture_m"],
+            wavelength_m=comms["crosslink_wavelength_m"],
+            pointing_error_rad=comms["crosslink_pointing_error_rad"],
+            dwdm_channels=int(comms["crosslink_dwdm_channels"]),
+            rx_sensitivity_photons_per_bit=comms["crosslink_rx_sensitivity_photons_per_bit"],
+        ).capacity_gbps
+    crosslink_gbps = o.get("crosslink_gbps", crosslink_gbps)
+    f_crosslink = 1.0 if net.required_gbps <= 0.0 else min(1.0, crosslink_gbps / net.required_gbps)
     slant_range_m = sp.orbit.altitude_km * 1000.0 * 2.0  # rough low-elevation slant range
     ttc_link = rf.link_margin(
         tx_power_dbw=comms["ttc_tx_power_dbw"],
@@ -229,12 +252,26 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "software": scenario.sustained_fraction,
         "power": f_power,
         "thermal": f_thermal_used,
-        "network": net.f_network * optical_availability,
+        "network": min(net.f_network, f_crosslink) * optical_availability,
         "availability": rel.f_availability,
         "utilization": utilization,
     }
     wf = build_waterfall(peak, factors)
     delivered = wf.delivered_tflops
+
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            "%s: it_power=%.0f kW q_waste=%.0f kW T_rad=%.0f K factors=%s "
+            "crosslink=%.0f Gbps failure=%.3f/yr delivered=%.0f TFLOP/s",
+            scenario.name,
+            it_power_w / 1000.0,
+            q_waste_w / 1000.0,
+            th.t_rad_k,
+            {k: round(v, 3) for k, v in factors.items()},
+            crosslink_gbps,
+            effective_failure_rate,
+            delivered,
+        )
 
     ms = mass.mass_buildup(
         n_accelerators=n_accel,
@@ -304,6 +341,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "radiator_area_available_m2": th.area_available_m2,
         "radiator_t_rad_k": th.t_rad_k,
         "chip_junction_k": th.t_junction_k,
+        "hbm_margin_k": th.hbm_margin_k if th.hbm_margin_k is not None else float("nan"),
         "radiator_net_flux_w_m2": th.net_flux_w_m2,
         "radiator_m2_per_kw": th.m2_per_kw,
         "thermal_kg_per_kw": th.kg_per_kw,
@@ -314,6 +352,8 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "network_available_gbps": net.available_gbps,
         "rf_ttc_margin_db": ttc_link.margin_db,
         "optical_downlink_availability": optical_availability,
+        "crosslink_capacity_gbps": crosslink_gbps,
+        "crosslink_factor": f_crosslink,
         "n_launches": math.ceil(launch_mass_kg / launch.capacity_kg),
         "sunlit_fraction": orbit_state.sunlit_fraction,
         "eclipse_fraction": orbit_state.eclipse_fraction,
