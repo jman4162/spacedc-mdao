@@ -1,43 +1,78 @@
 # spacedc-mdao
 
-A Python package for multidisciplinary design analysis and optimization (MDAO) of orbital compute infrastructure, with terrestrial data-center baselines for comparison.
+[![PyPI](https://img.shields.io/pypi/v/spacedc-mdao.svg)](https://pypi.org/project/spacedc-mdao/)
+[![CI](https://github.com/jman4162/spacedc-mdao/actions/workflows/ci.yml/badge.svg)](https://github.com/jman4162/spacedc-mdao/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://jman4162.github.io/spacedc-mdao/)
+[![Python](https://img.shields.io/pypi/pyversions/spacedc-mdao.svg)](https://pypi.org/project/spacedc-mdao/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-The package optimizes **delivered useful compute**, not nominal watts or nominal GPUs. It takes installed capacity and degrades it through power, thermal, network, reliability, and utilization limits, then reports where a design fails and which assumptions decide the outcome. Its job is to make the feasibility boundary visible, not to argue that space wins.
+A skeptical, provenance-driven feasibility engine for orbital data centers, with
+terrestrial baselines for comparison. It optimizes **delivered useful compute**,
+not nominal watts or nominal GPUs: it takes installed capacity, degrades it
+through power, thermal, network, reliability, and utilization limits, then reports
+which assumptions decide the outcome. The job is to make the feasibility boundary
+visible, not to argue that space wins.
 
-**Documentation:** <https://jman4162.github.io/spacedc-mdao/> (quick start, user tiers, model architecture, API reference, and a generated assumptions/provenance table). See `SPEC.md` for the design contract and `background_information/EQUATIONS.md` for the governing equations.
+![Path to viability](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/viability_ladder.gif)
 
-## Status
+## What would have to be true
 
-Phases 1 and 2 are complete. Implemented:
+For the bundled 1 MW LLM-inference design against a hyperscale Earth baseline
+(PUE 1.10), Earth costs **$66**/PFLOP-day and space costs **$5,389** — about
+**82x** more. Only **6.6%** of installed compute is delivered; the binding
+constraint is the network factor (0.17, downlink-limited). Stacking every
+improvement, each at its aggressive-to-speculative bound, shows what each metric
+buys:
 
-- **Core (Phase 1):** scenario loading, the discipline models in the v0.1 minimum set (`background_information/EQUATIONS.md` §15), the delivered-compute waterfall, an Earth-vs-space comparison with binding-constraint diagnosis and feasibility thresholds, Monte Carlo and tornado sensitivity, matplotlib plots, and a CLI.
-- **Thermal radiator co-design (2A):** a `thermal/` module coupling chip power → junction temperature → coolant loop → radiator temperature → area → mass, with net radiator flux (emission minus absorbed solar/albedo/Earth-IR at end-of-life coatings), a bottleneck classifier, and validation anchors (ISS PVR/EATCS, Starcloud, NASA high-temp). The radiator temperature is bounded by the chip stack; closure is checked at end of life.
-- **MDAO + optimization (2B):** OpenMDAO components wrap the evaluator (FD partials), `optimize_single` for constrained single-objective optimization, pymoo NSGA-II Pareto fronts, a scipy Latin-hypercube DOE, and SALib Sobol indices.
-- **Interactive dashboard (2C):** plotly figures (delivered/cost/mass/power-sankey, tornado, Pareto, constellation graph, thermal panels) and a Panel app, plus an assumption-provenance table.
-- **Fidelity (2D):** environmental CO₂e/water accounting, station-keeping Δv and propellant, beta-angle eclipse, an optional Skyfield ground-access seam, and five Earth baselines.
-- **Credibility (3A):** all soft factors moved to provenance-tagged catalogs; Starcloud/ISS recovered from the model; orbit-dependent radiation (TID/SEU); RF margin and optical weather availability bind; launch-cost cases; input validation.
-- **Real MDAO (3B):** mixed-integer architecture optimization (satellites, accelerators/sat, altitude); transient orbit thermal; a workload library (space-native vs Earth-dependent); uncertainty fan / orbit-timeline / link-budget-heatmap figures.
-- **UX (3C):** CLI `provenance`/`doe`/`sobol`/`--version`, HTML/Markdown report export, `Evaluation.to_dict()`, and a beginner→advanced notebook ladder.
+| Lever (current -> target) | Cumulative LCOC | x Earth |
+| --- | ---: | ---: |
+| baseline | $5,389 | 82x |
+| downlink throughput 200 Gbps -> unbounded | $1,237 | 19x |
+| launch cost $1,500 -> $200/kg | $765 | 12x |
+| production learning (unit cost) | $512 | 8x |
+| solar 100 -> 200 W/kg | $506 | 8x |
+| radiator 7 -> 2 kg/m^2 | $502 | 8x |
+| utilization 0.85 -> 0.98 | $435 | 7x |
+| failure rate 0.05 -> 0.01 /yr | $394 | **6x** |
 
-The package is skeptical by default. For the bundled 1 MW inference scenario, Earth wins on levelized cost: the orbital design is downlink-limited, its radiators are a multi-tonne burden (chip-limited temperature), and station-keeping plus replacement add up.
+Two ceilings no hardware fixes. The network factor is pinned at **0.75** by
+optical-downlink weather availability, so more bandwidth cannot exceed it without
+RF downlink, more ground stations, or a relay. And even with every lever maxed,
+space lands at **~6x Earth** ($394 vs $66) and wins **0%** of 500 Monte-Carlo
+draws — the residual is the launch, radiator, and bus mass Earth never carries.
+The unlock is a space-native, near-zero-downlink workload, not a faster GPU.
+
+These numbers are produced by the model, not typed in; regenerate them with
+`python scripts/generate_readme_assets.py`.
+
+## What the model shows
+
+| | |
+| --- | --- |
+| ![Delivered waterfall](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/delivered_waterfall.png) | Installed peak compute degraded to delivered: the network-limited step is the cliff. |
+| ![Tornado](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/tornado.png) | Which assumptions move levelized cost. Launch $/kg dominates the swept drivers. |
+| ![Monte Carlo](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/monte_carlo.png) | LCOC distribution under input uncertainty; space beats Earth in 0% of draws. |
 
 ## Install
 
-`spacedc-mdao` uses `uv`. The base install is light; capabilities live behind extras.
+`spacedc-mdao` uses [uv](https://docs.astral.sh/uv/). The base install is light;
+capabilities live behind extras.
 
 ```bash
-uv sync                                          # base (numpy/scipy/pydantic/pint/matplotlib)
-uv sync --extra dev --extra mdao --extra viz     # development + optimization + dashboard
+pip install spacedc-mdao            # base
+pip install "spacedc-mdao[mdao,viz]"  # optimization + figures
 ```
 
-| Extra    | Pulls in                          | Enables                                            |
-| -------- | --------------------------------- | -------------------------------------------------- |
-| `mdao`   | openmdao, pymoo, SALib            | optimization, Pareto fronts, DOE, Sobol            |
-| `viz`    | plotly, panel, networkx           | interactive figures + dashboard                    |
-| `orbit`  | skyfield                          | ground-station access windows (needs ephemeris)    |
-| `rf`     | [opensatcom](https://github.com/jman4162/opensatcom) | Tier-1 RF link-budget backend (else inline Friis/FSPL) |
+| Extra   | Pulls in                      | Enables                                  |
+| ------- | ----------------------------- | ---------------------------------------- |
+| `mdao`  | openmdao, pymoo, SALib        | optimization, Pareto fronts, DOE, Sobol  |
+| `viz`   | plotly, panel, networkx, kaleido | interactive + exported figures        |
+| `orbit` | skyfield                      | ground-station access (needs ephemeris)  |
+| `rf`    | opensatcom                    | Tier-1 RF link-budget backend            |
 
-## Use
+The distribution is `spacedc-mdao`; the import package is `orbitdc`.
+
+## Quick start
 
 ```python
 import orbitdc as odc
@@ -50,14 +85,40 @@ print(result.summary())
 print(result.explain_binding_constraints())
 ```
 
-From the command line:
-
 ```bash
-orbitdc compare  examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_hyperscale_baseline.yaml
-orbitdc optimize examples/scenarios/orbital_1mw_inference.yaml --pareto lcoc,kg_per_kw      # needs [mdao]
+orbitdc compare examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_hyperscale_baseline.yaml --tornado
+orbitdc robust  examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_*.yaml
+orbitdc optimize examples/scenarios/orbital_1mw_inference.yaml --pareto lcoc,kg_per_kw   # needs [mdao]
 ```
 
-Notebooks: `examples/notebooks/01_compare.ipynb` (Earth-vs-space) and `examples/notebooks/02_radiator_feasibility.ipynb` (how big and heavy the radiators must be). Dashboard: `uv run panel serve examples/dashboard_app.py --show` (needs `[viz]`).
+The [quick start](https://jman4162.github.io/spacedc-mdao/quickstart/) and
+[user tiers](https://jman4162.github.io/spacedc-mdao/tiers/) pages go from a
+one-line compare to custom catalogs and the dashboard.
+
+## What's inside
+
+Delivered compute is the product of the waterfall factors:
+
+```
+C_delivered = C_peak * f_software * f_power * f_thermal * f_network * f_availability * f_utilization
+```
+
+Each factor is a discipline model that multiplies installed capacity down: a
+radiator co-design ladder (chip -> junction -> coolant -> radiator -> area ->
+mass, closed at end of life), an optical/RF link budget, orbit and formation
+dynamics, radiation-driven reliability, and a levelized-cost spine with a
+Wright's-law learning curve. Every default number carries provenance (source,
+date, confidence, kind). The [model architecture](https://jman4162.github.io/spacedc-mdao/architecture/)
+and [governing equations](https://jman4162.github.io/spacedc-mdao/equations/)
+pages have the details; v0.4.0 completes Phases 1-4 (see `CHANGELOG.md`).
+
+## Documentation
+
+Full docs: <https://jman4162.github.io/spacedc-mdao/> — quick start, user tiers,
+model architecture, the governing equations, an API reference, and a generated
+assumptions/provenance table. See `SPEC.md` for the design contract and
+`background_information/EQUATIONS.md` for the equation map. The thermal modeling
+background is in `background_information/THEMRAL_RADIATOR_DEEPDIVE.md`.
 
 ## Development
 
@@ -67,8 +128,10 @@ uv run mypy src
 uv run pytest
 ```
 
-All code must pass ruff, `ruff format`, and `mypy --strict` before commit. CI enforces this. Every default number in the catalogs carries provenance (source, date, confidence, kind); see `background_information/THEMRAL_RADIATOR_DEEPDIVE.md` for the thermal modeling background.
+All code passes ruff, `ruff format`, and `mypy --strict` before commit; CI
+enforces it. Regenerate the README figures with
+`uv run --extra viz python scripts/generate_readme_assets.py`.
 
 ## License
 
-MIT.
+MIT. See `LICENSE`.
