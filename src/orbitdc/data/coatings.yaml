@@ -1,0 +1,61 @@
+# Radiator coating optical properties, beginning- and end-of-life.
+# Low solar absorptance (alpha) and high IR emissivity (eps) maximize net
+# rejection. Atomic oxygen / UV raise alpha and lower eps over a mission.
+
+osr:
+  name: "Optical solar reflector (quartz mirror)"
+  alpha_solar_bol:
+    value: 0.04
+    units: "fraction"
+    source: "Spacecraft thermal heritage; OSR alpha 0.04-0.085"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "empirical"
+  eps_ir_bol:
+    value: 0.85
+    units: "fraction"
+    source: "OSR IR emissivity 0.85-0.87"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "empirical"
+  alpha_solar_eol:
+    value: 0.07
+    units: "fraction"
+    source: "5-yr LEO degradation estimate (alpha rises)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  eps_ir_eol:
+    value: 0.82
+    units: "fraction"
+    source: "5-yr LEO degradation estimate (eps falls)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+
+ag_fep:
+  name: "Silver/aluminized Teflon (Ag/FEP)"
+  alpha_solar_bol: 0.08
+  eps_ir_bol: 0.85
+  alpha_solar_eol: 0.15
+  eps_ir_eol: 0.82
+
+white_z93:
+  name: "Z-93 / AZ-93 white paint"
+  alpha_solar_bol:
+    value: 0.14
+    units: "fraction"
+    source: "AZ Technology / NASA; Z-93 alpha 0.13-0.18"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "empirical"
+  eps_ir_bol: 0.90
+  alpha_solar_eol: 0.22
+  eps_ir_eol: 0.85
+
+black:
+  name: "Black paint"
+  alpha_solar_bol: 0.96
+  eps_ir_bol: 0.92
+  alpha_solar_eol: 0.96
+  eps_ir_eol: 0.90

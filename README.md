@@ -4,11 +4,11 @@ A Python package for multidisciplinary design analysis and optimization (MDAO) o
 
 The package optimizes **delivered useful compute**, not nominal watts or nominal GPUs. It takes installed capacity and degrades it through power, thermal, network, reliability, and utilization limits, then reports where a design fails and which assumptions decide the outcome. Its job is to make the feasibility boundary visible, not to argue that space wins.
 
-See `SPEC.md` for the design contract and `EQUATIONS.md` for the governing equations.
+See `SPEC.md` for the design contract and `background_information/EQUATIONS.md` for the governing equations.
 
 ## Status
 
-Phase 1 (thin end-to-end slice). Implemented: scenario loading, the discipline models in the v0.1 minimum set (`EQUATIONS.md` §15), the delivered-compute waterfall, an Earth-vs-space comparison with binding-constraint diagnosis, Monte Carlo and tornado sensitivity, and static plots. OpenMDAO coupling, interactive dashboards, and high-fidelity plugins are deferred to later phases.
+Phase 1 (thin end-to-end slice). Implemented: scenario loading, the discipline models in the v0.1 minimum set (`background_information/EQUATIONS.md` §15), the delivered-compute waterfall, an Earth-vs-space comparison with binding-constraint diagnosis, Monte Carlo and tornado sensitivity, and static plots. OpenMDAO coupling, interactive dashboards, and high-fidelity plugins are deferred to later phases.
 
 ## Install
 

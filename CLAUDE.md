@@ -2,14 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: Phase 1 implemented
+## Status: Phase 1 done; Phase 2A (thermal) landed
 
-The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + a notebook. OpenMDAO, the interactive viz stack, and high-fidelity plugins remain deferred (later phases).
+The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + notebooks.
+
+**Phase 2A — thermal radiator co-design (`src/orbitdc/thermal/`)** replaced the Tier-0 radiator with a radiator-in-the-loop module: net radiator flux (emission minus absorbed solar/albedo/Earth-IR, EOL coatings), the chip-to-radiator resistance stack that bounds the radiator temperature, a coolant loop whose pump power feeds back as a bus load, a mass build-up, and a bottleneck classifier (chip/coolant/transport/radiator/orientation-limited). It carries catalogs (`coatings`, `coolants`, `chip_stacks`, `radiator_panels`) and validation anchors (ISS PVR/EATCS, Starcloud, NASA high-temp). `compare()` now surfaces T_rad, junction temp, m²/kW, kg/kW, and the bottleneck. See `examples/notebooks/02_radiator_feasibility.ipynb`. No new dependencies. Authoritative source: `background_information/THEMRAL_RADIATOR_DEEPDIVE.md`.
+
+Still deferred: 2B OpenMDAO + pymoo optimization, 2C plotly/Panel dashboard, 2D Skyfield orbit / opensatcom RF / environmental / multiple Earth baselines.
 
 Key reference docs:
 
 - `SPEC.md` — the design contract: package concept, model families, full target layout, and MVP scope.
-- `EQUATIONS.md` — the equation map behind every model, in GitHub-rendered `$$` LaTeX. The v0.1 minimum equation set per discipline is §15; what to avoid early is §16. Each `models/` module cites its section.
+- `background_information/EQUATIONS.md` — the equation map behind every model, in GitHub-rendered `$$` LaTeX. The v0.1 minimum equation set per discipline is §15; what to avoid early is §16. Each `models/` module cites its section. (Reference docs live in `background_information/`; the arXiv PDF and `AI_WRITING_SLOP_Guide.md` are gitignored and stay local.)
 - `2511.19468v1.pdf` — reference orbital-data-center feasibility paper (arXiv:2511.19468). Excluded from git (see `.gitignore`); cite by ID.
 - The approved Phase 1 plan: `~/.claude/plans/please-make-an-implementation-rustling-puddle.md`.
 

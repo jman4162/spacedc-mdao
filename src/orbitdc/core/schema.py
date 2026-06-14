@@ -55,8 +55,13 @@ class SpaceParams(BaseModel):
     # Catalog keys.
     solar_array: str = "rigid_triple_junction"
     battery: str = "li_ion_generic"
-    radiator: str = "aluminum_panel"
     launch: str = "current_reusable"
+    # Thermal radiator co-design (Phase 2A).
+    radiator_panel: str = "deployable_osr"
+    coolant: str = "ammonia_single_phase"
+    chip_stack: str = "h100_direct_liquid"
+    thermal_environment: str = "conservative_leo"
+    thermal_eol: bool = True
     # Reliability.
     annual_failure_rate: float = Field(default=0.05, ge=0.0)
     spare_fraction: float = Field(default=0.0, ge=0.0)

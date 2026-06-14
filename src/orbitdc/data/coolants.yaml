@@ -1,0 +1,45 @@
+# Coolant loops for heat transport from cold plates to radiators.
+# Pump power is a parasitic bus load: single-phase ~2% of Q, two-phase ~11%.
+
+ammonia_single_phase:
+  fluid: "ammonia"
+  mode: "single_phase"
+  cp_j_kg_k: 4700.0
+  delta_t_k: 5.0
+  pump_power_fraction:
+    value: 0.02
+    units: "fraction"
+    source: "Single-phase mechanically pumped loop, optimized (NASA/ESA)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  freeze_temp_k: 195.4
+  fluid_mass_per_kw: 1.5
+  hardware_mass_per_kw: 2.0
+
+ammonia_two_phase:
+  fluid: "ammonia"
+  mode: "two_phase"
+  cp_j_kg_k: 4700.0
+  h_fg_j_kg: 1.37e6
+  delta_t_k: 3.0
+  pump_power_fraction:
+    value: 0.11
+    units: "fraction"
+    source: "Hybrid two-phase loop parasitic loss ~11% (1-ACT STAIF 2007)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  freeze_temp_k: 195.4
+  fluid_mass_per_kw: 1.0
+  hardware_mass_per_kw: 2.5
+
+water_single_phase:
+  fluid: "water"
+  mode: "single_phase"
+  cp_j_kg_k: 4186.0
+  delta_t_k: 5.0
+  pump_power_fraction: 0.02
+  freeze_temp_k: 273.15
+  fluid_mass_per_kw: 1.2
+  hardware_mass_per_kw: 1.8

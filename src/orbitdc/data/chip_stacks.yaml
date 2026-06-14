@@ -1,0 +1,49 @@
+# Per-accelerator chip-to-radiator thermal resistance stacks (K/W).
+# r_total * chip_power sets the junction-to-radiator temperature rise, which
+# bounds the maximum radiator temperature (hence minimum radiator area).
+
+h100_direct_liquid:
+  name: "H100 direct-to-chip liquid cooling"
+  r_junction_to_case:
+    value: 0.03
+    units: "K/W"
+    source: "Direct-liquid cold-plate stack estimate for an H100-class part"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+  r_tim: 0.01
+  r_coldplate: 0.02
+  r_transport: 0.01
+  r_radiator: 0.01
+  tj_max_k:
+    value: 393.0
+    units: "K"
+    source: "NVIDIA H100 throttle ~120 C"
+    date: "2026-06-13"
+    confidence: "high"
+    kind: "vendor"
+  tj_design_k:
+    value: 363.0
+    units: "K"
+    source: "Design target ~90 C for reliability"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  hbm_limit_k:
+    value: 368.0
+    units: "K"
+    source: "HBM is the more temperature-sensitive subsystem"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "estimated"
+
+h100_immersion:
+  name: "H100 two-phase immersion"
+  r_junction_to_case: 0.03
+  r_tim: 0.005
+  r_coldplate: 0.015
+  r_transport: 0.01
+  r_radiator: 0.01
+  tj_max_k: 393.0
+  tj_design_k: 363.0
+  hbm_limit_k: 368.0

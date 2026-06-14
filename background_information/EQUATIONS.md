@@ -172,12 +172,31 @@ Q_{\mathrm{rad}} = \epsilon \sigma A_{\mathrm{rad}} F_{\mathrm{view}}
 \left(T_{\mathrm{rad}}^4 - T_{\mathrm{sink}}^4\right)
 $$
 
-Solve for radiator area:
+But the usable **net** rejection subtracts the absorbed environment — direct
+solar, Earth albedo, and Earth IR — which is what the `orbitdc.thermal` module
+implements (Phase 2A). Per unit panel area, with `N_sides` radiating sides:
 
 $$
-A_{\mathrm{rad}} = \frac{Q_{\mathrm{waste}}}
-{\epsilon \sigma F_{\mathrm{view}} \left(T_{\mathrm{rad}}^4 - T_{\mathrm{sink}}^4\right)}
+q_{\mathrm{net}} = N_{\mathrm{sides}}\,\epsilon \sigma \left(T_{\mathrm{rad}}^4 - T_{\mathrm{sink}}^4\right)
+- \left[\alpha\,S\cos\theta_\odot + \alpha\,A_{\mathrm{alb}} F_\oplus S + \epsilon\,F_\oplus\,Q_{\mathrm{IR}}\right]
 $$
+
+with solar absorptance $\alpha$, IR emissivity $\epsilon$, solar irradiance
+$S\approx 1361\ \mathrm{W/m^2}$, albedo $A_{\mathrm{alb}}\approx 0.30$, Earth IR
+$Q_{\mathrm{IR}}\approx 238\ \mathrm{W/m^2}$, and Earth view factor $F_\oplus$.
+Low $\alpha$ / high $\epsilon$ is the design goal; net flux can go to zero. Closure
+must be checked at **end of life** ($\alpha$ rises, $\epsilon$ falls). Radiator area:
+
+$$
+A_{\mathrm{rad}} = \frac{Q_{\mathrm{waste}}}{q_{\mathrm{net}}}
+$$
+
+The radiator temperature is **not free**: the chip stack sets a ceiling
+$T_{\mathrm{rad,max}} = T_{j,\max} - Q_{\mathrm{chip}} R_{\mathrm{total}}$ (the
+resistance chain below), and running hotter cuts area as $T^4$ but risks the
+junction. Where the older form
+$Q_{\mathrm{rad}} = \epsilon \sigma A_{\mathrm{rad}} F_{\mathrm{view}}(T_{\mathrm{rad}}^4 - T_{\mathrm{sink}}^4)$
+appears with a constant $T_{\mathrm{sink}}$, treat it as a Tier-0 sanity check only.
 
 Where:
 

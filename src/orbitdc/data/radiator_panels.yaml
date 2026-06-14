@@ -1,0 +1,44 @@
+# Radiator panel configurations (geometry + areal mass + coating reference).
+# Areal density is system-level (panels + manifolds + deployment).
+
+deployable_osr:
+  name: "Two-sided deployable OSR radiator"
+  coating: "osr"
+  sides: 2
+  areal_density_kg_m2:
+    value: 7.0
+    units: "kg/m^2"
+    source: "Deployable system 5-10 kg/m^2 (ISS-scaled, modern mechanisms)"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "estimated"
+  max_temp_k: 350.0
+  view_factor_space: 0.95
+
+body_mounted_osr:
+  name: "One-sided body-mounted OSR radiator"
+  coating: "osr"
+  sides: 1
+  areal_density_kg_m2:
+    value: 2.5
+    units: "kg/m^2"
+    source: "NASA SoA body-mounted 2-3 kg/m^2"
+    date: "2026-06-13"
+    confidence: "medium"
+    kind: "empirical"
+  max_temp_k: 350.0
+  view_factor_space: 0.85
+
+high_temp_heatpipe:
+  name: "High-temperature foldable heat-pipe radiator (not GPU-compatible)"
+  coating: "osr"
+  sides: 2
+  areal_density_kg_m2:
+    value: 3.0
+    units: "kg/m^2"
+    source: "NASA lightweight high-temp radiator concept (<3 kg/m^2, 500-600 K)"
+    date: "2026-06-13"
+    confidence: "low"
+    kind: "speculative"
+  max_temp_k: 600.0
+  view_factor_space: 0.95

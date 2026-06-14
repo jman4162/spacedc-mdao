@@ -15,7 +15,6 @@ from orbitdc.core.registry import (
     get_accelerator,
     get_battery,
     get_launch,
-    get_radiator,
     get_solar_array,
 )
 from orbitdc.core.schema import Scenario
@@ -28,8 +27,10 @@ from orbitdc.models import (
     orbit,
     power,
     reliability,
-    thermal,
 )
+from orbitdc.thermal import thermal_codesign
+from orbitdc.thermal.catalog import get_chip_stack, get_coolant, get_radiator_surface
+from orbitdc.thermal.presets import get_environment
 from orbitdc.waterfall import build_waterfall
 
 # Soft cost/mass factors not yet promoted to catalogs (estimates; Phase 1).
@@ -43,6 +44,7 @@ COMMS_COST_PER_SAT_USD = 0.5e6
 GROUND_SEGMENT_USD = 20.0e6
 ANNUAL_OPS_USD = 5.0e6
 EARTH_MAINTENANCE_FRAC = 0.05
+RADIATOR_COST_PER_M2_USD = 5000.0  # space-qualified radiator panel
 
 
 def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None) -> Evaluation:
@@ -56,14 +58,17 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     accel = get_accelerator(scenario.accelerator)
     array = get_solar_array(sp.solar_array)
     battery = get_battery(sp.battery)
-    rad = get_radiator(sp.radiator)
     launch = get_launch(sp.launch)
+    coolant = get_coolant(sp.coolant)
+    surface = get_radiator_surface(sp.radiator_panel)
+    chip_stack = get_chip_stack(sp.chip_stack, accel.tdp_w)
+    thermal_env = get_environment(sp.thermal_environment)
 
     # Apply overrides (used by sensitivity / threshold solving).
     if "solar_specific_power_w_per_kg" in o:
         array = replace(array, specific_power_w_per_kg=o["solar_specific_power_w_per_kg"])
     if "radiator_areal_mass_kg_per_m2" in o:
-        rad = replace(rad, areal_mass_kg_per_m2=o["radiator_areal_mass_kg_per_m2"])
+        surface = replace(surface, areal_density_kg_m2=o["radiator_areal_mass_kg_per_m2"])
     launch_cost_per_kg = o.get("launch_cost_per_kg_usd", launch.cost_per_kg_usd)
     annual_failure_rate = o.get("annual_failure_rate", sp.annual_failure_rate)
     utilization = o.get("utilization", scenario.utilization)
@@ -80,9 +85,16 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
 
     orbit_state = orbit.orbit_state(sp.orbit.altitude_km)
 
+    # Thermal pump power is a bus load: q_waste includes pump dissipation, so the
+    # array carries IT + housekeeping + pump. Solve the small fixed point directly.
+    pump_frac = coolant.pump_power_fraction
+    base_load_w = it_power_w * (1.0 + sp.non_it_power_frac)
+    q_waste_w = base_load_w / (1.0 - pump_frac)
+    non_it_effective = q_waste_w / it_power_w - 1.0
+
     pw = power.size_power(
         it_power_w=it_power_w,
-        non_it_frac=sp.non_it_power_frac,
+        non_it_frac=non_it_effective,
         sunlit_fraction=orbit_state.sunlit_fraction,
         eclipse_duration_s=orbit_state.eclipse_duration_s,
         mission_years=scenario.mission_life_years,
@@ -91,7 +103,15 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     )
 
     area_available = arch.radiator_area_m2_per_sat * n_sat
-    th = thermal.size_thermal(q_waste_w=pw.load_w, area_available_m2=area_available, rad=rad)
+    th = thermal_codesign(
+        q_waste_w=q_waste_w,
+        chip_stack=chip_stack,
+        coolant=coolant,
+        surface=surface,
+        env=thermal_env,
+        area_available_m2=area_available,
+        eol=sp.thermal_eol,
+    )
 
     rel = reliability.size_reliability(
         n_accelerators=n_accel,
@@ -129,7 +149,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         payload_factor=PAYLOAD_FACTOR,
         array_mass_kg=pw.array_mass_kg,
         battery_mass_kg=pw.battery_mass_kg,
-        radiator_mass_kg=th.radiator_mass_kg,
+        radiator_mass_kg=th.panel_mass_kg + th.coolant_mass_kg,
         n_satellites=n_sat,
         comms_mass_per_sat_kg=COMMS_MASS_PER_SAT_KG,
         avionics_propulsion_per_sat_kg=AVIONICS_PROP_PER_SAT_KG,
@@ -144,7 +164,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         payload_factor=PAYLOAD_FACTOR,
         array_cost_usd=pw.array_cost_usd,
         battery_cost_usd=pw.battery_cost_usd,
-        radiator_cost_usd=th.radiator_cost_usd,
+        radiator_cost_usd=th.area_installed_m2 * RADIATOR_COST_PER_M2_USD,
         n_satellites=n_sat,
         bus_cost_per_sat_usd=BUS_COST_PER_SAT_USD,
         comms_cost_per_sat_usd=COMMS_COST_PER_SAT_USD,
@@ -163,6 +183,13 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "radiator_packaging_ratio": th.packaging_ratio,
         "radiator_area_required_m2": th.area_required_m2,
         "radiator_area_available_m2": th.area_available_m2,
+        "radiator_t_rad_k": th.t_rad_k,
+        "chip_junction_k": th.t_junction_k,
+        "radiator_net_flux_w_m2": th.net_flux_w_m2,
+        "radiator_m2_per_kw": th.m2_per_kw,
+        "thermal_kg_per_kw": th.kg_per_kw,
+        "thermal_pump_power_kw": th.pump_power_w / 1000.0,
+        "thermal_feasible": float(th.feasible),
         "network_required_gbps": net.required_gbps,
         "network_available_gbps": net.available_gbps,
         "n_launches": math.ceil(ms.dry_mass_kg / launch.capacity_kg),
@@ -189,6 +216,8 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         kg_per_kw=ms.dry_mass_kg / (it_power_w / 1000.0),
         mass_breakdown_kg=ms.breakdown_kg,
         details=details,
+        thermal_bottleneck=th.bottleneck,
+        thermal_warnings=th.warnings,
     )
 
 

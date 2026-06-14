@@ -27,3 +27,5 @@ class Evaluation:
     kg_per_kw: float | None = None
     mass_breakdown_kg: dict[str, float] | None = None
     details: dict[str, float] = field(default_factory=dict)
+    thermal_bottleneck: str | None = None
+    thermal_warnings: tuple[str, ...] = ()

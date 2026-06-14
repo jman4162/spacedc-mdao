@@ -46,6 +46,17 @@ def binding_constraints(ev: Evaluation) -> list[str]:
     if ratio is not None and ratio > 1.0:
         notes.append(f"radiator area exceeds packaging budget by {(ratio - 1.0) * 100:.0f}%")
 
+    if ev.thermal_bottleneck is not None:
+        m2_kw = ev.details.get("radiator_m2_per_kw")
+        kg_kw = ev.details.get("thermal_kg_per_kw")
+        t_rad = ev.details.get("radiator_t_rad_k")
+        notes.append(
+            f"thermal bottleneck: {ev.thermal_bottleneck} "
+            f"(T_rad {t_rad:.0f} K, {m2_kw:.2f} m^2/kW, {kg_kw:.1f} kg/kW thermal)"
+        )
+    for w in ev.thermal_warnings:
+        notes.append(f"thermal caveat: {w}")
+
     launches = ev.details.get("n_launches")
     if launches is not None and launches > 1.0:
         notes.append(f"requires ~{launches:.0f} launches at the chosen vehicle capacity")
