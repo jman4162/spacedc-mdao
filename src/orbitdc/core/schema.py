@@ -66,6 +66,10 @@ class SpaceParams(BaseModel):
     annual_failure_rate: float = Field(default=0.05, ge=0.0)
     spare_fraction: float = Field(default=0.0, ge=0.0)
     reset_recovery_availability: float = Field(default=0.99, gt=0.0, le=1.0)
+    # Orbit geometry and station-keeping (Phase 2D).
+    beta_deg: float = 0.0
+    drag_area_m2_per_sat: float = Field(default=20.0, ge=0.0)
+    thruster_isp_s: float = Field(default=220.0, gt=0.0)
 
 
 class EarthParams(BaseModel):
@@ -77,6 +81,9 @@ class EarthParams(BaseModel):
     facility_capex_per_mw_usd: float = Field(default=12.0e6, ge=0.0)
     availability: float = Field(default=0.995, gt=0.0, le=1.0)
     it_power_overhead_frac: float = Field(default=0.25, ge=0.0)
+    # Environmental (Phase 2D).
+    grid_carbon_intensity_kg_per_kwh: float = Field(default=0.40, ge=0.0)
+    wue_l_per_kwh: float = Field(default=1.8, ge=0.0)
 
 
 class Scenario(BaseModel):

@@ -31,8 +31,25 @@ class LinkResult:
     margin_db: float
 
 
-def fspl_db(range_m: float, freq_hz: float) -> float:
-    """Free-space path loss, dB: 20 log10(4 pi R / lambda)."""
+def preferred_backend() -> str:
+    """'opensatcom' if the Tier-1 backend is installed, else 'inline'."""
+    return "opensatcom" if HAS_OPENSATCOM else "inline"
+
+
+def fspl_db(range_m: float, freq_hz: float, backend: str = "auto") -> float:
+    """Free-space path loss, dB: 20 log10(4 pi R / lambda).
+
+    With ``backend='auto'`` (or ``'opensatcom'``) and opensatcom installed, the
+    Tier-1 backend is used; otherwise the inline Tier-0 form. The seam is
+    best-effort: any backend mismatch falls back to inline.
+    """
+    if backend in ("auto", "opensatcom") and HAS_OPENSATCOM:
+        try:
+            from opensatcom.propagation import FreeSpacePropagation
+
+            return float(FreeSpacePropagation().total_path_loss_db(freq_hz, range_m))
+        except Exception:
+            pass
     wavelength_m = SPEED_OF_LIGHT / freq_hz
     return 20.0 * math.log10(4.0 * math.pi * range_m / wavelength_m)
 

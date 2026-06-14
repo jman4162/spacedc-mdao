@@ -1,0 +1,15 @@
+name: "Leased colocation baseline"
+kind: earth
+mission_life_years: 5
+accelerator: h100_sxm
+utilization: 0.85
+sustained_fraction: 0.55
+discount_rate: 0.08
+earth:
+  n_accelerators: 1152
+  pue: 1.50
+  energy_price_per_kwh: 0.08
+  facility_capex_per_mw_usd: 8000000.0
+  availability: 0.99
+  grid_carbon_intensity_kg_per_kwh: 0.45
+  wue_l_per_kwh: 1.8

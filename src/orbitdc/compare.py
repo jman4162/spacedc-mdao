@@ -22,6 +22,7 @@ from orbitdc.evaluation import Evaluation
 from orbitdc.models import (
     cost,
     earth_baseline,
+    environmental,
     mass,
     network,
     orbit,
@@ -83,7 +84,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     peak = n_accel * accel.peak_tflops_dense
     it_power_w = n_accel * accel.tdp_w * (1.0 + sp.it_power_overhead_frac)
 
-    orbit_state = orbit.orbit_state(sp.orbit.altitude_km)
+    orbit_state = orbit.orbit_state(sp.orbit.altitude_km, sp.beta_deg)
 
     # Thermal pump power is a bus load: q_waste includes pump dissipation, so the
     # array carries IT + housekeeping + pump. Solve the small fixed point directly.
@@ -157,6 +158,31 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         margin_frac=MARGIN_FRAC,
     )
 
+    # Station-keeping: propellant to offset drag over the mission.
+    drag_area = sp.drag_area_m2_per_sat * n_sat
+    deltav_ms = (
+        orbit.drag_deltav_per_year_ms(sp.orbit.altitude_km, drag_area, ms.dry_mass_kg)
+        * scenario.mission_life_years
+    )
+    propellant_kg = orbit.station_keeping_propellant_kg(
+        deltav_ms, ms.dry_mass_kg, sp.thruster_isp_s
+    )
+    launch_mass_kg = ms.dry_mass_kg + propellant_kg
+
+    # Environmental: space operates on solar (no grid carbon/water); embodied +
+    # launch carbon dominate.
+    env_result = environmental.environmental(
+        delivered_tflops=delivered,
+        mission_years=scenario.mission_life_years,
+        facility_power_w=pw.load_w,
+        utilization=utilization,
+        grid_carbon_intensity_kg_per_kwh=0.0,
+        wue_l_per_kwh=0.0,
+        hardware_mass_kg=ms.dry_mass_kg,
+        embodied_ef_kg_per_kg=environmental.SPACECRAFT_EMBODIED_KG_PER_KG,
+        propellant_mass_kg=propellant_kg,
+    )
+
     cr = cost.space_cost(
         n_accelerators=n_accel,
         accel_unit_cost_usd=accel.unit_cost_usd,
@@ -168,7 +194,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         n_satellites=n_sat,
         bus_cost_per_sat_usd=BUS_COST_PER_SAT_USD,
         comms_cost_per_sat_usd=COMMS_COST_PER_SAT_USD,
-        launch_mass_kg=ms.dry_mass_kg,
+        launch_mass_kg=launch_mass_kg,
         launch_cost_per_kg_usd=launch_cost_per_kg,
         expected_failures=rel.expected_failures,
         ground_segment_usd=GROUND_SEGMENT_USD,
@@ -193,10 +219,16 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "thermal_feasible": float(th.feasible),
         "network_required_gbps": net.required_gbps,
         "network_available_gbps": net.available_gbps,
-        "n_launches": math.ceil(ms.dry_mass_kg / launch.capacity_kg),
+        "n_launches": math.ceil(launch_mass_kg / launch.capacity_kg),
         "sunlit_fraction": orbit_state.sunlit_fraction,
+        "eclipse_fraction": orbit_state.eclipse_fraction,
         "orbital_period_min": orbit_state.period_s / 60.0,
         "expected_failures": rel.expected_failures,
+        "station_keeping_deltav_ms": deltav_ms,
+        "propellant_mass_kg": propellant_kg,
+        "co2e_per_pflop_day": env_result.co2e_per_pflop_day,
+        "co2e_total_t": env_result.co2e_total_kg / 1000.0,
+        "water_l_per_pflop_day": env_result.water_l_per_pflop_day,
     }
 
     return Evaluation(
@@ -267,6 +299,17 @@ def evaluate_earth(scenario: Scenario) -> Evaluation:
         delivered_fraction=eb.delivered_fraction,
     )
 
+    env_e = environmental.environmental(
+        delivered_tflops=eb.delivered_tflops,
+        mission_years=scenario.mission_life_years,
+        facility_power_w=eb.facility_power_w,
+        utilization=scenario.utilization,
+        grid_carbon_intensity_kg_per_kwh=ep.grid_carbon_intensity_kg_per_kwh,
+        wue_l_per_kwh=ep.wue_l_per_kwh,
+        hardware_mass_kg=n_accel * accel.mass_kg * PAYLOAD_FACTOR,
+        embodied_ef_kg_per_kg=environmental.SERVER_EMBODIED_KG_PER_KG,
+    )
+
     return Evaluation(
         label=scenario.name,
         kind="earth",
@@ -280,7 +323,13 @@ def evaluate_earth(scenario: Scenario) -> Evaluation:
         lifecycle_pv_usd=cr.lifecycle_pv_usd,
         cost_breakdown_usd=cr.breakdown_usd,
         it_power_w=it_power_w,
-        details={"pue": eb.pue, "facility_power_w": eb.facility_power_w},
+        details={
+            "pue": eb.pue,
+            "facility_power_w": eb.facility_power_w,
+            "co2e_per_pflop_day": env_e.co2e_per_pflop_day,
+            "co2e_total_t": env_e.co2e_total_kg / 1000.0,
+            "water_l_per_pflop_day": env_e.water_l_per_pflop_day,
+        },
     )
 
 
@@ -338,6 +387,12 @@ class ComparisonResult:
             f"{'delivered fraction':<32}{s.delivered_fraction:>18.2%}{e.delivered_fraction:>18.2%}",
             f"{'LCOC $/PFLOP-day':<32}{s.lcoc_per_pflop_day:>18,.0f}{e.lcoc_per_pflop_day:>18,.0f}",
             f"{'$/accelerator-hour':<32}{s.cost_per_accelerator_hour:>18,.3f}{e.cost_per_accelerator_hour:>18,.3f}",
+            f"{'kgCO2e/PFLOP-day':<32}"
+            f"{s.details.get('co2e_per_pflop_day', float('nan')):>18,.1f}"
+            f"{e.details.get('co2e_per_pflop_day', float('nan')):>18,.1f}",
+            f"{'L water/PFLOP-day':<32}"
+            f"{s.details.get('water_l_per_pflop_day', float('nan')):>18,.1f}"
+            f"{e.details.get('water_l_per_pflop_day', float('nan')):>18,.1f}",
             "",
             f"Verdict: {verdict} on LCOC (space/earth = {ratio:.2f}x)",
         ]

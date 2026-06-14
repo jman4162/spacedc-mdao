@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: Phase 1 done; Phase 2A (thermal) + 2B (MDAO) + 2C (dashboard) landed
+## Status: Phase 1 + Phase 2 (2A–2D) complete
 
 The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + notebooks.
 
@@ -12,7 +12,9 @@ The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + p
 
 **Phase 2C — interactive dashboard (`src/orbitdc/viz/`, optional `[viz]` extra)**: plotly figure builders in `viz/plotly_figures.py` (delivered/cost/mass/power-sankey, tornado, pareto scatter/parcoords, constellation graph, and the thermal panels: area-vs-temperature, net-W/m² waterfall, chip-to-radiator ladder); `viz/provenance.py` enumerates every provenance-tagged catalog value into a table; `viz/dashboard.py` assembles a tabbed Panel app. Run: `uv run panel serve examples/dashboard_app.py --show`. The matplotlib `viz/plots.py` stays in the base install; plotly/panel/networkx are import-on-use.
 
-Still deferred: 2D Skyfield orbit / opensatcom RF / environmental / multiple Earth baselines.
+**Phase 2D — fidelity upgrades**: `models/environmental.py` (EQUATIONS §13 — operational/embodied/launch CO₂e and water, normalized per delivered PFLOP-day; wired into `compare()` and the summary, where space shows zero operational water and higher embodied/launch carbon per unit delivered while Earth carries grid carbon + water); station-keeping in `models/orbit.py` (coarse atmospheric density, drag Δv, rocket-equation propellant → launch mass) plus beta-angle eclipse via `sp.beta_deg`; the opensatcom Tier-1 RF backend wired behind a best-effort seam in `models/rf.py` (`fspl_db(..., backend=...)`, falls back to inline); optional Skyfield ground-access in `models/orbit_skyfield.py` (`[orbit]` extra; needs ephemeris, so local/plugin only, not in CI); and four more Earth baselines (`examples/scenarios/earth_*.yaml`: leased colo, renewable+storage, gas-backed, constrained-grid).
+
+Phase 2 is complete. Extras: `[mdao]`, `[viz]`, `[orbit]`, `[rf]`. The base install stays numpy/scipy/pydantic/pint/pyyaml/matplotlib.
 
 Key reference docs:
 

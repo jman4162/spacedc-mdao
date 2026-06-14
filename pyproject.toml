@@ -29,6 +29,8 @@ rf = ["opensatcom>=0.4.0"]
 mdao = ["openmdao>=3.44", "pymoo>=0.6", "SALib>=1.5"]
 # Interactive exploration dashboard (Phase 2C).
 viz = ["plotly>=6", "panel>=1.9", "networkx>=3"]
+# Skyfield orbit propagation for ground-station access windows (Phase 2D).
+orbit = ["skyfield>=1.54"]
 dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
 
 [project.scripts]
@@ -63,6 +65,7 @@ module = [
     "panel.*",
     "plotly.*",
     "networkx.*",
+    "skyfield.*",
 ]
 ignore_missing_imports = true
 
