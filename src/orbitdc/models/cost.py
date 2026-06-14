@@ -8,6 +8,7 @@ on mission life, degradation, failure rate, and utilization, not just capex.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from orbitdc.core.constants import HOURS_PER_YEAR
@@ -53,6 +54,23 @@ def _levelize(
     return pv_cost, lcoc, per_hour
 
 
+def learning_multiplier(quantity: int, learning_rate: float) -> float:
+    """Wright's-law unit-cost multiplier vs the first unit.
+
+    learning_rate is the cost fraction per doubling of cumulative production
+    (e.g. 0.85 = 85% curve). 1.0 disables learning. Applied as a fleet-average
+    proxy (the Nth-unit multiplier).
+    """
+    if quantity <= 1 or learning_rate >= 1.0:
+        return 1.0
+    return float(float(quantity) ** math.log2(learning_rate))
+
+
+def trl_multiplier(trl: float) -> float:
+    """Cost premium for immature hardware: TRL 9 = 1.0, lower TRL costs more."""
+    return 1.0 + max(0.0, 9.0 - trl) * 0.15
+
+
 def space_cost(
     *,
     n_accelerators: int,
@@ -74,9 +92,16 @@ def space_cost(
     discount_rate: float,
     delivered_tflops: float,
     delivered_fraction: float,
+    learning_rate: float = 1.0,
+    bus_trl: float = 9.0,
 ) -> CostResult:
-    accel_cost = n_accelerators * accel_unit_cost_usd
-    bus_cost = n_satellites * bus_cost_per_sat_usd
+    # Production learning lowers per-unit accelerator and bus costs with quantity;
+    # low TRL raises bus cost.
+    accel_cost = (
+        n_accelerators * accel_unit_cost_usd * learning_multiplier(n_accelerators, learning_rate)
+    )
+    bus_unit = bus_cost_per_sat_usd * trl_multiplier(bus_trl)
+    bus_cost = n_satellites * bus_unit * learning_multiplier(n_satellites, learning_rate)
     comms_cost = n_satellites * comms_cost_per_sat_usd
     launch_cost = launch_mass_kg * launch_cost_per_kg_usd
 

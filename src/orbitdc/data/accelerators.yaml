@@ -128,3 +128,79 @@ generic_asic:
   tid_tolerance_krad: 50.0
   seu_susceptibility: 0.6
   ecc_mitigation: 0.90
+
+amd_mi300x:
+  name: "AMD Instinct MI300X"
+  precision: "fp16"
+  sparsity_supported: true
+  tdp_w:
+    value: 750.0
+    units: "W"
+    source: "AMD MI300X OAM datasheet (750 W)"
+    date: "2026-06-14"
+    confidence: "high"
+    kind: "vendor"
+  peak_tflops_dense:
+    value: 1300.0
+    units: "TFLOP/s"
+    source: "AMD MI300X: ~1.3 PFLOPS dense FP16 (2.6 with 2:4 sparsity)"
+    date: "2026-06-14"
+    confidence: "high"
+    kind: "vendor"
+  memory_gb: 192.0
+  mem_bw_tb_s: 5.3
+  mass_kg:
+    value: 2.0
+    units: "kg"
+    source: "Estimated OAM module + board share"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  unit_cost_usd:
+    value: 18000.0
+    units: "USD"
+    source: "Estimated street price, 2025-2026"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  tid_tolerance_krad: 20.0
+  seu_susceptibility: 1.0
+  ecc_mitigation: 0.80
+
+tpu_v5e:
+  name: "Google TPU v5e"
+  precision: "bf16"
+  sparsity_supported: false
+  tdp_w:
+    value: 170.0
+    units: "W"
+    source: "Estimated; Google does not publish a TDP for TPU v5e"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  peak_tflops_dense:
+    value: 197.0
+    units: "TFLOP/s"
+    source: "Google TPU v5e: 197 bf16 TFLOPS per chip (published)"
+    date: "2026-06-14"
+    confidence: "high"
+    kind: "vendor"
+  memory_gb: 16.0
+  mem_bw_tb_s: 0.819
+  mass_kg:
+    value: 1.0
+    units: "kg"
+    source: "Estimated"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  unit_cost_usd:
+    value: 8000.0
+    units: "USD"
+    source: "Not sold standalone (cloud only); estimated equivalent"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "speculative"
+  tid_tolerance_krad: 30.0
+  seu_susceptibility: 0.8
+  ecc_mitigation: 0.85

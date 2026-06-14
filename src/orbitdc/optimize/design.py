@@ -22,6 +22,7 @@ DESIGN_VARS: dict[str, tuple[str, float, float]] = {
     "radiator_cost_per_m2": ("radiator_cost_per_m2_usd", 2000.0, 12000.0),
     "altitude_km": ("altitude_km", 400.0, 1200.0),
     "radiator_t_rad_setpoint": ("radiator_t_rad_setpoint_k", 300.0, 345.0),
+    "learning_rate": ("learning_rate", 0.75, 1.0),
 }
 
 # Integer architecture variables for mixed-integer optimization.

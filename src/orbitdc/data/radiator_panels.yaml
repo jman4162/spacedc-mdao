@@ -42,3 +42,17 @@ high_temp_heatpipe:
     kind: "speculative"
   max_temp_k: 600.0
   view_factor_space: 0.95
+
+composite_deployable:
+  name: "Carbon-composite deployable radiator"
+  coating: "osr"
+  sides: 2
+  areal_density_kg_m2:
+    value: 4.0
+    units: "kg/m^2"
+    source: "Carbon-composite deployable panel (lighter than aluminum)"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  max_temp_k: 350.0
+  view_factor_space: 0.95

@@ -40,3 +40,23 @@ aggressive_future:
     date: "2026-06-13"
     confidence: "low"
     kind: "speculative"
+
+current_heavy_lift:
+  name: "Current heavy-lift reusable (LEO)"
+  cost_per_kg_usd:
+    value: 1500.0
+    units: "USD/kg"
+    source: "Current heavy-lift reusable LEO price (mid-2020s)"
+    date: "2026-06-14"
+    confidence: "medium"
+    kind: "estimated"
+    distribution: "triangular"
+    low: 1000.0
+    high: 2500.0
+  capacity_kg:
+    value: 100000.0
+    units: "kg"
+    source: "Heavy-lift reusable LEO capacity"
+    date: "2026-06-14"
+    confidence: "medium"
+    kind: "estimated"

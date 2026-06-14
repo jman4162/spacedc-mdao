@@ -22,7 +22,9 @@ Phase 2 is complete. Extras: `[mdao]`, `[viz]`, `[orbit]`, `[rf]`. The base inst
 
 Phase 3 is complete. The package is a credible, provenance-driven, optimizable exploration environment. Extras: `[mdao]`, `[viz]`, `[orbit]`, `[rf]`.
 
-**Phase 4A — credibility & validation.** The HBM limit is wired in: `thermal/network.max_radiator_temp_k` now uses the tighter of the junction and HBM limits, so the demo H100 is **HBM-limited** (radiator runs cooler at ~312 K, thermal mass up to ~18 kg/kW); `thermal/diagnosis` has an `hbm-limited` label. Crosslink bandwidth is **derived** from formation geometry via `models/comms_link.crosslink_capacity` (modem-capped, photon-limited at long range — reproduces Suncatcher's ~12.8 Tbps per aperture); `Architecture.formation_separation_m` drives it, the scalar `crosslink_gbps` is now an explicit override, and crosslink folds into the network factor. `tests/test_references.py` reproduces Suncatcher (crosslink, <$200/kg launch) and McCalip (orbital several× costlier) from the model. `calibrate.fit_parameter` (scipy least-squares → provenance-tagged `Assumption`) is the Tier-4 entry point. `logging` + `orbitdc --verbose` trace intermediate values. Still to do: 4B (breadth), 4C (deepen physics), 4D (docs site), 4E (PyPI release).
+**Phase 4A — credibility & validation.** The HBM limit is wired in: `thermal/network.max_radiator_temp_k` now uses the tighter of the junction and HBM limits, so the demo H100 is **HBM-limited** (radiator runs cooler at ~312 K, thermal mass up to ~18 kg/kW); `thermal/diagnosis` has an `hbm-limited` label. Crosslink bandwidth is **derived** from formation geometry via `models/comms_link.crosslink_capacity` (modem-capped, photon-limited at long range — reproduces Suncatcher's ~12.8 Tbps per aperture); `Architecture.formation_separation_m` drives it, the scalar `crosslink_gbps` is now an explicit override, and crosslink folds into the network factor. `tests/test_references.py` reproduces Suncatcher (crosslink, <$200/kg launch) and McCalip (orbital several× costlier) from the model. `calibrate.fit_parameter` (scipy least-squares → provenance-tagged `Assumption`) is the Tier-4 entry point. `logging` + `orbitdc --verbose` trace intermediate values.
+
+**Phase 4B — breadth of trade studies.** `data/accelerators.yaml` now has five entries with cited specs, adding **AMD MI300X** (1300 dense FP16 TFLOPS, 750 W, 192 GB HBM3) and **Google TPU v5e** (197 bf16 TFLOPS, 16 GB); catalog variety added across launch (`current_heavy_lift` ~$1500/kg), batteries (`li_ion_high_energy` 250 Wh/kg), solar (`flexible_rosa` 150 W/kg), and radiators (`composite_deployable` 4 kg/m²). `models/cost.py` gained a Wright's-law learning curve (`learning_multiplier(quantity, rate)`, `unit_cost ∝ n^log2(rate)`) applied to accelerator and bus costs, plus a TRL premium (`trl_multiplier`); `data/cost_structure.yaml` carries `learning_rate` (default 1.0 = off) and `bus_trl` (default 9). `learning_rate` is an `evaluate_space` override and a tornado/Sobol driver. `optimize/robust.py`: `batch_compare(space, earths)` returns a verdict matrix (space LCOC is Earth-independent, so robustness reduces to beating the cheapest baseline), `robust_optimize` minimizes space LCOC and counts baselines beaten; CLI `orbitdc robust <space> <earth...>`. Still to do: 4C (deepen physics), 4D (docs site), 4E (PyPI release).
 
 Key reference docs:
 
@@ -98,7 +100,7 @@ Deferred to later phases (do not pull in for Phase 1):
 
 ## MVP scope — build this first, in this spirit
 
-Terrestrial baseline (PUE/WUE/energy price/capex/utilization) + orbital scalar model (launch $/kg, satellite $/W, W/kg, life, failure rate, utilization) + solar/radiator/battery sizing + simple RF and optical link budgets + accelerator catalog (H100-like, TPU-like, generic ASIC) + Monte Carlo & tornado sensitivity + Pareto dashboard + assumption provenance.
+Terrestrial baseline (PUE/WUE/energy price/capex/utilization) + orbital scalar model (launch $/kg, satellite $/W, W/kg, life, failure rate, utilization) + solar/radiator/battery sizing + simple RF and optical link budgets + accelerator catalog (H100, AMD MI300X, Google TPU v5e, TPU-like, generic ASIC) + Monte Carlo & tornado sensitivity + Pareto dashboard + assumption provenance.
 
 **Explicitly out of MVP:** formation-flying dynamics, detailed radiation transport, full thermal FEM. The MVP wins by making first-order physics and economics impossible to hand-wave — not by depth in any one discipline.
 
@@ -130,6 +132,7 @@ uv run pytest                      # run the test suite
 uv run pytest tests/test_orbit.py -k eclipse   # run a single test
 uv run python -m orbitdc compare examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_hyperscale_baseline.yaml
 uv run orbitdc optimize examples/scenarios/orbital_1mw_inference.yaml --pareto lcoc,kg_per_kw   # needs [mdao]
+uv run orbitdc robust examples/scenarios/orbital_1mw_inference.yaml examples/scenarios/earth_*.yaml   # space vs every Earth baseline
 ```
 
 **Code-quality gate:** all code must pass `ruff check`, `ruff format`, and `mypy --strict` (configured over `src/`) before commit. CI (`.github/workflows/ci.yml`) enforces ruff + mypy + pytest; do not commit changes that break them.

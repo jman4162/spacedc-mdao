@@ -59,6 +59,8 @@ GROUND_SEGMENT_USD = _COST["ground_segment_usd"]
 ANNUAL_OPS_USD = _COST["annual_ops_usd"]
 EARTH_MAINTENANCE_FRAC = _COST["earth_maintenance_frac"]
 RADIATOR_COST_PER_M2_USD = _COST["radiator_cost_per_m2_usd"]
+LEARNING_RATE_DEFAULT = _COST["learning_rate"]
+BUS_TRL = _COST["bus_trl"]
 ALUMINUM_CP_J_PER_KG_K = 900.0  # radiator thermal capacitance (specific heat)
 
 logger = logging.getLogger("orbitdc")
@@ -105,6 +107,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     base_launch_cost = _launch_cost_for_case(sp.launch, sp.launch_case, launch.cost_per_kg_usd)
     launch_cost_per_kg = o.get("launch_cost_per_kg_usd", base_launch_cost)
     radiator_cost_per_m2 = o.get("radiator_cost_per_m2_usd", RADIATOR_COST_PER_M2_USD)
+    learning_rate = o.get("learning_rate", LEARNING_RATE_DEFAULT)
     annual_failure_rate = o.get("annual_failure_rate", sp.annual_failure_rate)
     utilization = o.get("utilization", scenario.utilization)
     wl = scenario.workload
@@ -332,6 +335,8 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         discount_rate=scenario.discount_rate,
         delivered_tflops=delivered,
         delivered_fraction=wf.delivered_fraction,
+        learning_rate=learning_rate,
+        bus_trl=BUS_TRL,
     )
 
     details: dict[str, float] = {

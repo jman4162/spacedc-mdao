@@ -34,3 +34,18 @@ rigid_triple_junction:
     date: "2026-06-13"
     confidence: "low"
     kind: "estimated"
+
+flexible_rosa:
+  name: "Flexible roll-out array (ROSA-class)"
+  specific_power_w_per_kg:
+    value: 150.0
+    units: "W/kg"
+    source: "Roll-out flexible array; higher specific power than rigid"
+    date: "2026-06-14"
+    confidence: "medium"
+    kind: "estimated"
+  cell_efficiency: 0.30
+  packing_efficiency: 0.88
+  pointing_efficiency: 0.95
+  annual_degradation: 0.02
+  cost_per_w_usd: 60.0

@@ -88,6 +88,15 @@ def _optimize(args: argparse.Namespace) -> int:
     return 0
 
 
+def _robust(args: argparse.Namespace) -> int:
+    from orbitdc.optimize.robust import batch_compare, format_batch
+
+    space = _load(args.space)
+    earths = [_load(p) for p in args.earths]
+    print(format_batch(batch_compare(space, earths)))
+    return 0
+
+
 def _provenance(args: argparse.Namespace) -> int:
     from orbitdc.viz.provenance import collect_provenance
 
@@ -158,6 +167,11 @@ def build_parser() -> argparse.ArgumentParser:
     opt_p.add_argument("--pop", type=int, default=24, help="NSGA-II population size")
     opt_p.add_argument("--gen", type=int, default=15, help="NSGA-II generations")
     opt_p.set_defaults(func=_optimize)
+
+    rob_p = sub.add_parser("robust", help="compare one space design against many earth baselines")
+    rob_p.add_argument("space", help="path to the space scenario YAML")
+    rob_p.add_argument("earths", nargs="+", help="paths to earth baseline scenario YAMLs")
+    rob_p.set_defaults(func=_robust)
 
     prov_p = sub.add_parser("provenance", help="dump every provenance-tagged catalog value")
     prov_p.set_defaults(func=_provenance)

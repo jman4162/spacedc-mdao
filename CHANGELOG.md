@@ -14,6 +14,17 @@ compute and reports the feasibility boundary; it is skeptical by default.
   (`tests/test_references.py`); `calibrate.fit_parameter` Tier-4 harness.
 - `logging` + `orbitdc --verbose`.
 
+### 4B — breadth of trade studies
+- Real accelerators with cited specs: AMD MI300X and Google TPU v5e (now five
+  catalog entries); added catalog variety (current heavy-lift launch,
+  high-energy battery, flexible/ROSA solar, composite-deployable radiator).
+- Cost learning curves (Wright's law, `learning_multiplier`) and a TRL premium
+  (`trl_multiplier`) in `models/cost.py`; `learning_rate`/`bus_trl` in
+  `data/cost_structure.yaml`. `learning_rate` is a sensitivity/Sobol driver.
+- Multi-scenario robustness (`optimize/robust.py`): `batch_compare` matrices one
+  space design against every Earth baseline; `robust_optimize` minimizes space
+  LCOC and reports baselines beaten. CLI `orbitdc robust <space> <earth...>`.
+
 ## 0.3.0 — Phase 3
 
 ### 3A — credibility & provenance

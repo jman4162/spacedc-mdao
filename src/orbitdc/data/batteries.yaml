@@ -24,3 +24,16 @@ li_ion_generic:
     date: "2026-06-13"
     confidence: "low"
     kind: "estimated"
+
+li_ion_high_energy:
+  name: "High-specific-energy Li-ion pack"
+  specific_energy_wh_per_kg:
+    value: 250.0
+    units: "Wh/kg"
+    source: "Advanced space-qualified Li-ion (upper end)"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  depth_of_discharge: 0.40
+  round_trip_efficiency: 0.90
+  cost_per_wh_usd: 0.70

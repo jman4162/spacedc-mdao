@@ -22,6 +22,7 @@ TORNADO_RANGES: dict[str, tuple[float, float]] = {
     "radiator_areal_mass_kg_per_m2": (3.0, 10.0),
     "annual_failure_rate": (0.02, 0.12),
     "utilization": (0.50, 0.95),
+    "learning_rate": (0.80, 1.0),
 }
 
 

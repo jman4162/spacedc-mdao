@@ -44,3 +44,17 @@ default:
     date: "2026-06-13"
     confidence: "low"
     kind: "estimated"
+  learning_rate:
+    value: 1.0
+    units: "fraction/doubling"
+    source: "Wright's-law cost fraction per production doubling; 1.0 = no learning"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+  bus_trl:
+    value: 9.0
+    units: "TRL"
+    source: "Technology readiness level of the satellite bus (9 = flight-proven)"
+    date: "2026-06-14"
+    confidence: "medium"
+    kind: "estimated"
