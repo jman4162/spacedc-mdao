@@ -53,3 +53,43 @@ def ground_station_access(
     return AccessWindows(
         n_passes=len(starts), total_access_hours=total_hours, pass_starts_utc=starts
     )
+
+
+def access_availability(windows: AccessWindows, days: int) -> float:
+    """Fraction of the window the satellite is in view of the station (0..1)."""
+    span_hours = days * 24.0
+    if span_hours <= 0.0:
+        return 0.0
+    return min(1.0, windows.total_access_hours / span_hours)
+
+
+def network_access_fraction(
+    tle_line1: str,
+    tle_line2: str,
+    ground_stations: list[tuple[float, float]],
+    *,
+    start_utc: tuple[int, int, int],
+    days: int = 3,
+    min_elevation_deg: float = 10.0,
+) -> float:
+    """Union access fraction across a ground-station network (0..1).
+
+    Treats stations as independent (1 - prod(1 - a_i)); a rough upper bound on
+    the true union when passes overlap. Use it to refine optical-downlink
+    availability under the Skyfield orbit fidelity.
+    """
+    if not ground_stations:
+        return 0.0
+    miss = 1.0
+    for lat, lon in ground_stations:
+        w = ground_station_access(
+            tle_line1,
+            tle_line2,
+            lat,
+            lon,
+            start_utc=start_utc,
+            days=days,
+            min_elevation_deg=min_elevation_deg,
+        )
+        miss *= 1.0 - access_availability(w, days)
+    return 1.0 - miss

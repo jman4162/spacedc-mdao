@@ -11,9 +11,15 @@ from orbitdc.core.constants import STEFAN_BOLTZMANN
 from orbitdc.thermal.surfaces import Coating, RadiatorSurface, ThermalEnvironment
 
 
-def emitted_flux_w_m2(t_rad_k: float, eps: float, sides: int, t_sink_k: float = 3.0) -> float:
-    """Gross emitted flux per unit panel area: N_sides * eps * sigma * (T_rad^4 - T_sink^4)."""
-    return sides * eps * STEFAN_BOLTZMANN * (t_rad_k**4 - t_sink_k**4)
+def emitted_flux_w_m2(
+    t_rad_k: float, eps: float, sides: int, t_sink_k: float = 3.0, view_factor: float = 1.0
+) -> float:
+    """Gross emitted flux per unit panel area: F_v * N_sides * eps * sigma * (T_rad^4 - T_sink^4).
+
+    `view_factor` (1.0 = full hemisphere to space) is the Level-4 geometric
+    derate for self-view, articulation, and solar-array blocking.
+    """
+    return view_factor * sides * eps * STEFAN_BOLTZMANN * (t_rad_k**4 - t_sink_k**4)
 
 
 def net_flux_w_m2(
@@ -22,11 +28,12 @@ def net_flux_w_m2(
     env: ThermalEnvironment,
     *,
     eol: bool = True,
+    view_factor: float = 1.0,
 ) -> float:
     """Net rejected flux per unit panel area (W/m^2). Can be <= 0 (cannot reject)."""
     alpha = surface.coating.alpha(eol)
     eps = surface.coating.eps(eol)
-    emitted = emitted_flux_w_m2(t_rad_k, eps, surface.sides, env.deep_space_sink_k)
+    emitted = emitted_flux_w_m2(t_rad_k, eps, surface.sides, env.deep_space_sink_k, view_factor)
     absorbed = env.absorbed_w_m2(alpha, eps)
     return emitted - absorbed
 

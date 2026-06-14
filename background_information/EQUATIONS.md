@@ -244,6 +244,24 @@ For a first version, model this as an efficiency and max-heat-transfer constrain
 
 Make thermal closure at least as visible as power closure: thermal closes (yes/no), radiator area required, radiator mass required, maximum junction temperature, thermal throttling fraction, radiator packaging ratio. Do not let the package silently assume all IT power can be rejected — that is where optimistic space-data-center arguments get sloppy.
 
+### Level 4 — parametric view factor (Phase 4C)
+
+The full-hemisphere assumption ($F_{\mathrm{view}} = 1$) is optimistic. A parametric (not ray-traced) effective view factor combines articulation, panel self-view, and solar-array blocking multiplicatively:
+
+$$
+F_{\mathrm{eff}} = F_{\mathrm{nom}}\,\cos\theta_{\mathrm{art}}\,(1 - f_{\mathrm{self}})\,(1 - f_{\mathrm{array}})
+$$
+
+and scales emitted flux. Full ray tracing / CFD stays a Tier-3 plugin.
+
+### Level 5 — mission-integrated degradation (Phase 4C)
+
+Rather than a single end-of-life snapshot, integrate the coating trajectory ($\alpha$ rising, $\varepsilon$ falling linearly BOL→EOL), micrometeoroid/debris area loss, and a single-loop-out derate over the mission, returning a derate on the rejectable flux relative to the EOL snapshot:
+
+$$
+D = \frac{\langle\, q_{\mathrm{net}}(t)\,A_{\mathrm{ret}}(t)\,\phi_{\mathrm{loop}}(t)\,\rangle_t}{q_{\mathrm{net,EOL}}}
+$$
+
 ## 5. Mass equations
 
 Mass is the economic coupling between physics and launch cost.
@@ -327,6 +345,16 @@ m_{\mathrm{prop}} = m_0 \left(1 - e^{-\Delta v / (I_{sp} g_0)}\right)
 $$
 
 Use closed-form orbital equations for education and for the v0.1 sunlit/eclipse estimate; use numerical propagation for higher-fidelity work. Google's Project Suncatcher treats close formations, J2/non-spherical gravity, drag, and station-keeping as real design constraints, so do not reduce orbit to "sunlight percentage only." ([Google Research][4])
+
+### Formation flying (Phase 4C)
+
+Relative motion uses the Clohessy-Wiltshire mean motion $n = \sqrt{\mu/a^3}$; bounded relative orbits are closed in the unperturbed two-body model, so formation-keeping cost is perturbation- or collision-driven. Drift cancellation is a small fraction $\eta$ of the nominal drag $\Delta v$ (differential drag/J2):
+
+$$
+\Delta v_{\mathrm{drift}} \approx \eta\,\Delta v_{\mathrm{drag}}
+$$
+
+The collision-avoidance margin is the separation in units of navigation uncertainty, $m = s/\sigma$. When $m$ falls below a safe threshold $m_0$, conjunction-avoidance maneuvers accrue at a rate $\propto (m_0/m - 1)$, so a tighter formation (which buys more optical crosslink bandwidth, §8) costs more to hold safely. The same `formation_separation_m` drives both the crosslink rate and the keeping/risk budget.
 
 ## 7. RF antenna and link-budget equations
 

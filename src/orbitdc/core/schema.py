@@ -79,10 +79,41 @@ class SpaceParams(BaseModel):
     annual_failure_rate: float = Field(default=0.05, ge=0.0)
     spare_fraction: float = Field(default=0.0, ge=0.0)
     reset_recovery_availability: float = Field(default=0.99, gt=0.0, le=1.0)
+    # Graceful degradation (Phase 4C): time-stepped fleet health with optional
+    # launch-quantized resupply. Off by default (scalar mean availability).
+    graceful_degradation: bool = False
+    resupply_interval_years: float | None = Field(default=None, gt=0.0)
     # Orbit geometry and station-keeping (Phase 2D).
     beta_deg: float = 0.0
     drag_area_m2_per_sat: float = Field(default=20.0, ge=0.0)
     thruster_isp_s: float = Field(default=220.0, gt=0.0)
+    # Formation flying (Phase 4C). Differential drag drives drift cancellation;
+    # navigation uncertainty vs separation sets the collision-avoidance margin.
+    formation_position_uncertainty_m: float = Field(default=50.0, gt=0.0)
+    differential_drag_frac: float = Field(default=0.05, ge=0.0)
+    # Thermal Level 4 (Phase 4C): parametric view-factor derate. Off by default
+    # (full-hemisphere assumption); when on, reduces effective emission.
+    thermal_view_factors: bool = False
+    radiator_articulation_deg: float = Field(default=0.0, ge=0.0)
+    radiator_self_view_frac: float = Field(default=0.05, ge=0.0, lt=1.0)
+    radiator_array_blocking_frac: float = Field(default=0.10, ge=0.0, lt=1.0)
+    # Thermal Level 5 (Phase 4C): mission-integrated degradation. Off by default
+    # (single EOL snapshot); when on, derates f_thermal for coating drift, MMOD
+    # area loss, and a possible coolant-loop-out.
+    thermal_degradation: bool = False
+    mmod_area_loss_per_year: float = Field(default=0.005, ge=0.0)
+    coolant_loop_out_prob_per_year: float = Field(default=0.02, ge=0.0)
+    n_coolant_loops: int = Field(default=2, ge=1)
+    # Orbit fidelity (Phase 4C): closed-form by default; "skyfield" derives the
+    # ground-station access fraction from a TLE (needs the `orbit` extra + data;
+    # falls back to closed-form on any failure). Access refines optical downlink.
+    orbit_fidelity: Literal["closed_form", "skyfield"] = "closed_form"
+    tle_line1: str | None = None
+    tle_line2: str | None = None
+    ground_stations: tuple[tuple[float, float], ...] = ()
+    access_start_utc: tuple[int, int, int] | None = None
+    access_days: int = Field(default=3, ge=1)
+    access_min_elevation_deg: float = Field(default=10.0, ge=0.0)
 
 
 class EarthParams(BaseModel):

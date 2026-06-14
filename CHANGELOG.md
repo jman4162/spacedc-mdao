@@ -25,6 +25,24 @@ compute and reports the feasibility boundary; it is skeptical by default.
   space design against every Earth baseline; `robust_optimize` minimizes space
   LCOC and reports baselines beaten. CLI `orbitdc robust <space> <earth...>`.
 
+### 4C — deepen physics (all opt-in; defaults unchanged)
+- Formation dynamics (`models/formation.py`): Clohessy-Wiltshire mean motion,
+  differential-drag drift cancellation, and a collision-avoidance margin
+  (separation / nav uncertainty) that drives conjunction maneuvers. Folds into
+  station-keeping; `formation_separation_m` is an override.
+- Thermal Level 4 (`thermal/view_factors.py`): parametric effective view factor
+  from articulation, self-view, and solar-array blocking; behind
+  `thermal_view_factors`.
+- Thermal Level 5 (`thermal/degradation.py`): mission-integrated coating
+  trajectory + MMOD area loss + single-loop-out derate on f_thermal; behind
+  `thermal_degradation`.
+- Skyfield orbit fidelity: ground-station access fraction (SGP4) refines optical
+  downlink availability behind `orbit_fidelity="skyfield"` + the `orbit` extra,
+  with a logged graceful fallback to closed-form.
+- Graceful degradation (`reliability.fleet_health_curve`): a time-stepped fleet
+  capacity curve with launch-quantized resupply (sawtooth), exposed as
+  `Evaluation.availability_curve`; behind `graceful_degradation`.
+
 ## 0.3.0 — Phase 3
 
 ### 3A — credibility & provenance

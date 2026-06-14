@@ -31,6 +31,8 @@ class Evaluation:
     details: dict[str, float] = field(default_factory=dict)
     thermal_bottleneck: str | None = None
     thermal_warnings: tuple[str, ...] = ()
+    # (time_years, online_fraction) samples when graceful degradation is enabled.
+    availability_curve: tuple[tuple[float, float], ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Plain nested dict (JSON-serializable) of the full evaluation."""

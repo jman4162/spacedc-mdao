@@ -59,6 +59,7 @@ def thermal_codesign(
     area_available_m2: float,
     eol: bool = True,
     t_rad_override: float | None = None,
+    view_factor: float = 1.0,
 ) -> ThermalCodesignResult:
     """Solve the coupled chip->radiator thermal design and size area + mass.
 
@@ -74,9 +75,9 @@ def thermal_codesign(
     t_junction = network.junction_temperature_k(t_rad, chip_stack)
 
     # 2. Net rejection at that temperature (EOL coatings).
-    net = radiation.net_flux_w_m2(t_rad, surface, env, eol=eol)
+    net = radiation.net_flux_w_m2(t_rad, surface, env, eol=eol, view_factor=view_factor)
     emitted = radiation.emitted_flux_w_m2(
-        t_rad, surface.coating.eps(eol), surface.sides, env.deep_space_sink_k
+        t_rad, surface.coating.eps(eol), surface.sides, env.deep_space_sink_k, view_factor
     )
     absorbed = max(0.0, emitted - net)
     absorbed_fraction = absorbed / emitted if emitted > 0.0 else 1.0

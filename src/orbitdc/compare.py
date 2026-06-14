@@ -31,6 +31,7 @@ from orbitdc.models import (
     cost,
     earth_baseline,
     environmental,
+    formation,
     mass,
     network,
     orbit,
@@ -39,7 +40,7 @@ from orbitdc.models import (
     reliability,
     rf,
 )
-from orbitdc.thermal import thermal_codesign
+from orbitdc.thermal import degradation, thermal_codesign, view_factors
 from orbitdc.thermal.catalog import get_chip_stack, get_coolant, get_radiator_surface
 from orbitdc.thermal.presets import get_environment
 from orbitdc.thermal.transient import TransientResult, transient_orbit
@@ -77,6 +78,37 @@ def _launch_cost_for_case(launch_key: str, case: str, nominal: float) -> float:
         if case == "aggressive" and prov.low is not None:
             return prov.low
     return nominal
+
+
+def _skyfield_access_fraction(sp: object) -> float:
+    """Ground-station access fraction via Skyfield; 1.0 (no refinement) on failure.
+
+    Skyfield needs the `orbit` extra and a one-time data download, so any
+    failure (missing extra, no TLE, no station, download error) logs a warning
+    and falls back to the closed-form availability rather than raising.
+    """
+    sp_any = sp  # SpaceParams; typed loosely to keep this helper import-light
+    tle1 = getattr(sp_any, "tle_line1", None)
+    tle2 = getattr(sp_any, "tle_line2", None)
+    stations = list(getattr(sp_any, "ground_stations", ()))
+    start = getattr(sp_any, "access_start_utc", None)
+    if not (tle1 and tle2 and stations and start):
+        logger.warning("orbit_fidelity=skyfield but TLE/stations/start missing; using closed-form")
+        return 1.0
+    try:
+        from orbitdc.models import orbit_skyfield
+
+        return orbit_skyfield.network_access_fraction(
+            tle1,
+            tle2,
+            stations,
+            start_utc=tuple(start),
+            days=getattr(sp_any, "access_days", 3),
+            min_elevation_deg=getattr(sp_any, "access_min_elevation_deg", 10.0),
+        )
+    except Exception as exc:  # ImportError, data download, SGP4 errors
+        logger.warning("Skyfield access computation failed (%s); using closed-form", exc)
+        return 1.0
 
 
 def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None) -> Evaluation:
@@ -123,6 +155,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     n_sat = int(o.get("n_satellites", arch.satellites))
     accel_per_sat = int(o.get("accelerators_per_satellite", arch.accelerators_per_satellite))
     altitude_km = o.get("altitude_km", sp.orbit.altitude_km)
+    separation_m = o.get("formation_separation_m", arch.formation_separation_m)
     t_rad_setpoint = o.get("radiator_t_rad_setpoint_k")
 
     n_accel = n_sat * accel_per_sat
@@ -156,6 +189,17 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     f_power = min(1.0, 1.0 / solar_packaging_ratio)
 
     area_available = arch.radiator_area_m2_per_sat * n_sat
+    # Thermal Level 4: a parametric view-factor derate (off by default).
+    if sp.thermal_view_factors:
+        vf = view_factors.effective_view_factor(
+            nominal=surface.view_factor_space,
+            articulation_deg=sp.radiator_articulation_deg,
+            self_view_frac=sp.radiator_self_view_frac,
+            array_blocking_frac=sp.radiator_array_blocking_frac,
+        )
+        view_factor = vf.effective
+    else:
+        view_factor = 1.0
     th = thermal_codesign(
         q_waste_w=q_waste_w,
         chip_stack=chip_stack,
@@ -165,6 +209,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         area_available_m2=area_available,
         eol=sp.thermal_eol,
         t_rad_override=t_rad_setpoint,
+        view_factor=view_factor,
     )
 
     # Radiation: orbit + hardware tolerance add to the (non-radiation) base rate.
@@ -186,6 +231,20 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         reset_recovery_availability=sp.reset_recovery_availability,
     )
 
+    # Graceful degradation (optional): a time-stepped fleet-health curve with
+    # launch-quantized resupply; its mission-mean availability replaces the scalar.
+    health_curve: reliability.FleetHealthCurve | None = None
+    if sp.graceful_degradation:
+        health_curve = reliability.fleet_health_curve(
+            n_accelerators=n_accel,
+            annual_failure_rate=effective_failure_rate,
+            mission_years=scenario.mission_life_years,
+            spare_fraction=sp.spare_fraction,
+            reset_recovery_availability=sp.reset_recovery_availability,
+            resupply_interval_years=sp.resupply_interval_years,
+        )
+        rel = replace(rel, f_availability=health_curve.f_availability)
+
     # Transient thermal (optional): orbit-averaging relaxes the worst-case limit
     # because eclipse phases reject more heat than the hot sunlit phase.
     f_thermal_used = th.f_thermal
@@ -202,6 +261,22 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
             freeze_temp_k=coolant.freeze_temp_k,
         )
         f_thermal_used = tr.avg_throttle
+
+    # Thermal Level 5: mission-integrated degradation derates the rejectable flux.
+    thermal_derate = 1.0
+    if sp.thermal_degradation and th.feasible:
+        deg = degradation.mission_thermal_derate(
+            mission_years=scenario.mission_life_years,
+            t_rad_k=th.t_rad_k,
+            surface=surface,
+            env=thermal_env,
+            view_factor=view_factor,
+            mmod_area_loss_per_year=sp.mmod_area_loss_per_year,
+            loop_out_prob_per_year=sp.coolant_loop_out_prob_per_year,
+            n_loops=sp.n_coolant_loops,
+        )
+        thermal_derate = deg.derate
+        f_thermal_used = min(1.0, f_thermal_used * thermal_derate)
 
     # Compute available before the network limit, then size the network on it.
     pre_network = (
@@ -220,6 +295,13 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         comms["optical_downlink_availability"] if arch.downlink_type == "optical" else 1.0
     )
 
+    # Skyfield orbit fidelity: refine optical availability by the ground-station
+    # access fraction. Graceful fallback (logged) on missing extra/data/TLE.
+    access_fraction = 1.0
+    if sp.orbit_fidelity == "skyfield" and arch.downlink_type == "optical":
+        access_fraction = _skyfield_access_fraction(sp)
+        optical_availability *= access_fraction
+
     # Crosslink capacity derived from formation geometry + the optical link budget
     # (unless the scenario set crosslink_gbps explicitly). Internal traffic that
     # exceeds it throttles compute too.
@@ -227,7 +309,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         crosslink_gbps = arch.crosslink_gbps
     else:
         crosslink_gbps = comms_link.crosslink_capacity(
-            separation_m=arch.formation_separation_m,
+            separation_m=separation_m,
             tx_power_w=comms["crosslink_tx_power_w"],
             tx_aperture_m=comms["crosslink_aperture_m"],
             rx_aperture_m=comms["crosslink_aperture_m"],
@@ -292,10 +374,23 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
 
     # Station-keeping: propellant to offset drag over the mission.
     drag_area = sp.drag_area_m2_per_sat * n_sat
-    deltav_ms = (
-        orbit.drag_deltav_per_year_ms(altitude_km, drag_area, ms.dry_mass_kg)
-        * scenario.mission_life_years
-    )
+    drag_deltav_per_year = orbit.drag_deltav_per_year_ms(altitude_km, drag_area, ms.dry_mass_kg)
+    deltav_ms = drag_deltav_per_year * scenario.mission_life_years
+
+    # Formation-keeping: drift cancellation + collision-avoidance maneuvers. Only
+    # a multi-satellite constellation flies in formation.
+    if n_sat > 1:
+        fk = formation.formation_keeping(
+            altitude_km=altitude_km,
+            drag_deltav_per_year_ms=drag_deltav_per_year,
+            differential_drag_frac=sp.differential_drag_frac,
+            separation_m=separation_m,
+            position_uncertainty_m=sp.formation_position_uncertainty_m,
+        )
+        deltav_ms += fk.formation_deltav_per_year_ms * scenario.mission_life_years
+    else:
+        fk = None
+
     propellant_kg = orbit.station_keeping_propellant_kg(
         deltav_ms, ms.dry_mass_kg, sp.thruster_isp_s
     )
@@ -370,6 +465,19 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "station_keeping_deltav_ms": deltav_ms,
         "launch_cost_per_kg_usd": launch_cost_per_kg,
         "propellant_mass_kg": propellant_kg,
+        "thermal_view_factor": view_factor,
+        "thermal_degradation_derate": thermal_derate,
+        "ground_station_access_fraction": access_fraction,
+        "fleet_resupply_launches": (
+            float(health_curve.n_resupply_launches) if health_curve is not None else 0.0
+        ),
+        "fleet_replaced_units": (
+            health_curve.replaced_units_total if health_curve is not None else 0.0
+        ),
+        "formation_deltav_per_year_ms": (
+            fk.formation_deltav_per_year_ms if fk is not None else 0.0
+        ),
+        "collision_margin_sigmas": (fk.collision_margin_sigmas if fk is not None else float("inf")),
         "co2e_per_pflop_day": env_result.co2e_per_pflop_day,
         "co2e_total_t": env_result.co2e_total_kg / 1000.0,
         "water_l_per_pflop_day": env_result.water_l_per_pflop_day,
@@ -395,6 +503,11 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         details=details,
         thermal_bottleneck=th.bottleneck,
         thermal_warnings=th.warnings,
+        availability_curve=(
+            tuple(zip(health_curve.times_years, health_curve.surviving_fraction, strict=True))
+            if health_curve is not None
+            else None
+        ),
     )
 
 
