@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: Phase 1 done; Phase 2A (thermal) + 2B (MDAO) landed
+## Status: Phase 1 done; Phase 2A (thermal) + 2B (MDAO) + 2C (dashboard) landed
 
 The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + pytest). The package is `orbitdc` (importable) / `spacedc-mdao` (distribution), under `src/orbitdc/`. Implemented: `core/` (Assumption, schema, scenario loader, units, registry), provenance-tagged `data/` catalogs, the discipline models in `models/`, the delivered-compute waterfall + diagnostics + `compare()` spine, Monte Carlo and tornado in `optimize/`, matplotlib `viz/`, a CLI, and example scenarios + notebooks.
 
@@ -10,7 +10,9 @@ The Phase 1 thin end-to-end slice is built and passing (ruff + mypy --strict + p
 
 **Phase 2B — MDAO + optimization (`src/orbitdc/mdao/`, `src/orbitdc/optimize/`, optional `[mdao]` extra)**: `OrbitDCComponent` wraps `evaluate_space` as an OpenMDAO `ExplicitComponent` (FD partials; `run_model` matches `evaluate_space` exactly); `optimize_single` does constrained gradient-free single-objective optimization (ScipyOptimizeDriver/COBYLA). Multi-objective Pareto is pymoo NSGA-II (`optimize/pareto.py`) called directly on the evaluator. `optimize/doe.py` is a scipy-QMC Latin-hypercube sweep; `optimize/sensitivity.py` adds SALib Sobol indices. Shared design-variable/objective spec in `optimize/design.py`. CLI: `orbitdc optimize <scenario> [--objective lcoc | --pareto lcoc,kg_per_kw]`. Note: the OpenMDAO Pareto driver class is `pymooDriver` (lowercase) with a thin API, so we use pymoo directly. `import orbitdc.mdao` requires the extra; the base package never imports it.
 
-Still deferred: 2C plotly/Panel dashboard, 2D Skyfield orbit / opensatcom RF / environmental / multiple Earth baselines.
+**Phase 2C — interactive dashboard (`src/orbitdc/viz/`, optional `[viz]` extra)**: plotly figure builders in `viz/plotly_figures.py` (delivered/cost/mass/power-sankey, tornado, pareto scatter/parcoords, constellation graph, and the thermal panels: area-vs-temperature, net-W/m² waterfall, chip-to-radiator ladder); `viz/provenance.py` enumerates every provenance-tagged catalog value into a table; `viz/dashboard.py` assembles a tabbed Panel app. Run: `uv run panel serve examples/dashboard_app.py --show`. The matplotlib `viz/plots.py` stays in the base install; plotly/panel/networkx are import-on-use.
+
+Still deferred: 2D Skyfield orbit / opensatcom RF / environmental / multiple Earth baselines.
 
 Key reference docs:
 

@@ -189,6 +189,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         "radiator_m2_per_kw": th.m2_per_kw,
         "thermal_kg_per_kw": th.kg_per_kw,
         "thermal_pump_power_kw": th.pump_power_w / 1000.0,
+        "bus_load_w": q_waste_w,
         "thermal_feasible": float(th.feasible),
         "network_required_gbps": net.required_gbps,
         "network_available_gbps": net.available_gbps,

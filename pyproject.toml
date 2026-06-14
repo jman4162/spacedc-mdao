@@ -27,6 +27,8 @@ dependencies = [
 rf = ["opensatcom>=0.4.0"]
 # MDAO + optimization (Phase 2B). PymooDriver needs openmdao >= 3.44.
 mdao = ["openmdao>=3.44", "pymoo>=0.6", "SALib>=1.5"]
+# Interactive exploration dashboard (Phase 2C).
+viz = ["plotly>=6", "panel>=1.9", "networkx>=3"]
 dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
 
 [project.scripts]
@@ -58,8 +60,16 @@ module = [
     "openmdao.*",
     "pymoo.*",
     "SALib.*",
+    "panel.*",
+    "plotly.*",
+    "networkx.*",
 ]
 ignore_missing_imports = true
+
+# Panel ships py.typed but has untyped functions; the dashboard is thin glue.
+[[tool.mypy.overrides]]
+module = ["orbitdc.viz.dashboard"]
+disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
