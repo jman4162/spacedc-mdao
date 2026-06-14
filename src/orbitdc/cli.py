@@ -5,15 +5,33 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from pydantic import ValidationError
+
+from orbitdc import __version__
 from orbitdc.compare import compare
 from orbitdc.core.scenario import load_scenario
+from orbitdc.core.schema import Scenario
 from orbitdc.optimize.sensitivity import tornado
 from orbitdc.optimize.uncertainty import monte_carlo
 
 
+def _load(path: str) -> Scenario:
+    """Load a scenario with a friendly error instead of a raw ValidationError."""
+    try:
+        return load_scenario(path)
+    except FileNotFoundError:
+        raise SystemExit(f"error: scenario file not found: {path}") from None
+    except ValidationError as exc:
+        n = len(exc.errors())
+        lines = "\n".join(
+            f"  - {'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors()
+        )
+        raise SystemExit(f"error: invalid scenario {path} ({n} problem(s)):\n{lines}") from None
+
+
 def _compare(args: argparse.Namespace) -> int:
-    space = load_scenario(args.space)
-    earth = load_scenario(args.earth)
+    space = _load(args.space)
+    earth = _load(args.earth)
     result = compare(space, earth)
 
     print(result.summary())
@@ -42,7 +60,7 @@ def _optimize(args: argparse.Namespace) -> int:
     from orbitdc.mdao import optimize_single
     from orbitdc.optimize.pareto import pareto_nsga2
 
-    space = load_scenario(args.space)
+    space = _load(args.space)
     design_vars = [v.strip() for v in args.design_vars.split(",")] if args.design_vars else None
 
     if args.pareto:
@@ -70,8 +88,50 @@ def _optimize(args: argparse.Namespace) -> int:
     return 0
 
 
+def _provenance(args: argparse.Namespace) -> int:
+    from orbitdc.viz.provenance import collect_provenance
+
+    rows = collect_provenance()
+    print(f"{'catalog':<18}{'entry':<26}{'field':<28}{'value':>14}  conf  kind")
+    for r in sorted(rows, key=lambda x: (x["catalog"], x["entry"], x["field"])):
+        print(
+            f"{r['catalog']:<18}{r['entry']:<26}{r['field']:<28}"
+            f"{r['value']:>14,.4g}  {r['confidence']:<5} {r['kind']}"
+        )
+    print(f"\n{len(rows)} provenance-tagged values.")
+    return 0
+
+
+def _doe(args: argparse.Namespace) -> int:
+    import numpy as np
+
+    from orbitdc.optimize.doe import latin_hypercube_doe
+
+    space = _load(args.space)
+    metrics = [m.strip() for m in args.metrics.split(",")]
+    doe = latin_hypercube_doe(space, metrics, n=args.n, seed=args.seed)
+    print(f"DOE ({doe.values.shape[0]} samples) over {doe.design_vars}:")
+    for j, m in enumerate(metrics):
+        col = doe.values[:, j]
+        med = float(np.median(col))
+        print(f"  {m:<20} min={col.min():,.2f}  median={med:,.2f}  max={col.max():,.2f}")
+    return 0
+
+
+def _sobol(args: argparse.Namespace) -> int:
+    from orbitdc.optimize.sensitivity import sobol_indices
+
+    space = _load(args.space)
+    sob = sobol_indices(space, args.objective, n=args.n, seed=args.seed)
+    print(f"Sobol indices for {args.objective} (total-order, largest first):")
+    for name in sorted(sob.st, key=lambda k: sob.st[k], reverse=True):
+        print(f"  {name:<30} ST={sob.st[name]:.3f}  S1={sob.s1[name]:.3f}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="orbitdc", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"orbitdc {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     cmp_p = sub.add_parser("compare", help="compare a space scenario against an earth baseline")
@@ -95,6 +155,23 @@ def build_parser() -> argparse.ArgumentParser:
     opt_p.add_argument("--pop", type=int, default=24, help="NSGA-II population size")
     opt_p.add_argument("--gen", type=int, default=15, help="NSGA-II generations")
     opt_p.set_defaults(func=_optimize)
+
+    prov_p = sub.add_parser("provenance", help="dump every provenance-tagged catalog value")
+    prov_p.set_defaults(func=_provenance)
+
+    doe_p = sub.add_parser("doe", help="Latin-hypercube design-of-experiments (needs mdao extra)")
+    doe_p.add_argument("space", help="path to the space scenario YAML")
+    doe_p.add_argument("--metrics", default="lcoc,kg_per_kw", help="comma-separated metrics")
+    doe_p.add_argument("--n", type=int, default=32, help="number of samples")
+    doe_p.add_argument("--seed", type=int, default=0)
+    doe_p.set_defaults(func=_doe)
+
+    sob_p = sub.add_parser("sobol", help="Sobol global sensitivity (needs mdao extra)")
+    sob_p.add_argument("space", help="path to the space scenario YAML")
+    sob_p.add_argument("--objective", default="lcoc", help="objective to analyze")
+    sob_p.add_argument("--n", type=int, default=64, help="base sample size")
+    sob_p.add_argument("--seed", type=int, default=0)
+    sob_p.set_defaults(func=_sobol)
     return parser
 
 

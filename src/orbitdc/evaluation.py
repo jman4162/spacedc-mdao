@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 from orbitdc.waterfall import Waterfall
 
@@ -29,3 +31,11 @@ class Evaluation:
     details: dict[str, float] = field(default_factory=dict)
     thermal_bottleneck: str | None = None
     thermal_warnings: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        """Plain nested dict (JSON-serializable) of the full evaluation."""
+        return asdict(self)
+
+    def to_json(self, indent: int | None = 2) -> str:
+        """JSON string of the full evaluation."""
+        return json.dumps(self.to_dict(), indent=indent)

@@ -20,10 +20,12 @@ from orbitdc.compare import (
     evaluate_earth,
     evaluate_space,
 )
+from orbitdc.core.registry import list_catalogs
 from orbitdc.core.scenario import load_scenario, load_scenario_dict
 from orbitdc.evaluation import Evaluation
+from orbitdc.reporting import export_report
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "ComparisonResult",
@@ -32,6 +34,8 @@ __all__ = [
     "evaluate",
     "evaluate_earth",
     "evaluate_space",
+    "export_report",
+    "list_catalogs",
     "load_scenario",
     "load_scenario_dict",
 ]

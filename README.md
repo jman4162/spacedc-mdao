@@ -15,6 +15,9 @@ Phases 1 and 2 are complete. Implemented:
 - **MDAO + optimization (2B):** OpenMDAO components wrap the evaluator (FD partials), `optimize_single` for constrained single-objective optimization, pymoo NSGA-II Pareto fronts, a scipy Latin-hypercube DOE, and SALib Sobol indices.
 - **Interactive dashboard (2C):** plotly figures (delivered/cost/mass/power-sankey, tornado, Pareto, constellation graph, thermal panels) and a Panel app, plus an assumption-provenance table.
 - **Fidelity (2D):** environmental CO₂e/water accounting, station-keeping Δv and propellant, beta-angle eclipse, an optional Skyfield ground-access seam, and five Earth baselines.
+- **Credibility (3A):** all soft factors moved to provenance-tagged catalogs; Starcloud/ISS recovered from the model; orbit-dependent radiation (TID/SEU); RF margin and optical weather availability bind; launch-cost cases; input validation.
+- **Real MDAO (3B):** mixed-integer architecture optimization (satellites, accelerators/sat, altitude); transient orbit thermal; a workload library (space-native vs Earth-dependent); uncertainty fan / orbit-timeline / link-budget-heatmap figures.
+- **UX (3C):** CLI `provenance`/`doe`/`sobol`/`--version`, HTML/Markdown report export, `Evaluation.to_dict()`, and a beginner→advanced notebook ladder.
 
 The package is skeptical by default. For the bundled 1 MW inference scenario, Earth wins on levelized cost: the orbital design is downlink-limited, its radiators are a multi-tonne burden (chip-limited temperature), and station-keeping plus replacement add up.
 

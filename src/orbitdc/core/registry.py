@@ -105,6 +105,17 @@ def _catalog(category: str) -> dict[str, Any]:
     return out
 
 
+def list_catalogs() -> list[str]:
+    """Names of the bundled data catalogs (YAML files under orbitdc/data)."""
+    from importlib.resources import files
+
+    return sorted(
+        p.name.removesuffix(".yaml")
+        for p in files("orbitdc.data").iterdir()
+        if p.name.endswith(".yaml")
+    )
+
+
 def get_accelerator(key: str) -> Accelerator:
     return cast(Accelerator, _lookup("accelerators", key))
 

@@ -16,6 +16,12 @@ jobs:
         run: uv python install 3.12
       - name: Sync
         run: uv sync --extra dev --extra mdao --extra viz
+      - name: Editable install guard
+        run: |
+          for i in 1 2 3; do
+            uv sync --extra dev --extra mdao --extra viz
+            uv run --no-sync python -c "import orbitdc; print(orbitdc.__version__)"
+          done
       - name: Ruff lint
         run: uv run ruff check .
       - name: Ruff format
