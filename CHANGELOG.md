@@ -3,7 +3,15 @@
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
 compute and reports the feasibility boundary; it is skeptical by default.
 
-## Unreleased — Phase 4 (in progress)
+## 0.4.0 — Phase 4
+
+Credibility & validation, breadth, deepened physics (all opt-in), a docs site,
+and the first PyPI release. Reserve 1.0.0 for an API-stability commitment.
+
+### 4E — PyPI release
+- Version 0.4.0; clean-venv install from the built wheel imports `orbitdc`, ships
+  `py.typed` + the data catalogs, and runs the CLI. `twine check` passes.
+- `release.yml`: publish-on-tag via PyPI Trusted Publishing (OIDC, no token).
 
 ### 4A — credibility & validation
 - HBM thermal limit wired into the radiator-temperature ceiling and bottleneck

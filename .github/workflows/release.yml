@@ -1,0 +1,48 @@
+name: release
+
+# Publishes to PyPI when a v* tag is pushed, using PyPI Trusted Publishing
+# (OIDC — no stored token). One-time setup required (see below):
+#   1. Create the `spacedc-mdao` project on PyPI (or let the first publish create
+#      it once a Trusted Publisher is configured as a "pending" publisher).
+#   2. On PyPI, add a Trusted Publisher: owner `jman4162`, repo `spacedc-mdao`,
+#      workflow `release.yml`, environment `pypi`.
+#   3. In GitHub repo settings, create an Environment named `pypi`.
+# Then: bump the version, tag `vX.Y.Z`, and push the tag.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build sdist + wheel
+        run: uv build
+      - name: Check metadata
+        run: uvx twine check dist/*
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/spacedc-mdao
+    permissions:
+      id-token: write  # required for Trusted Publishing (OIDC)
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
