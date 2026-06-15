@@ -1,6 +1,6 @@
 # Thermal radiator deep dive
 
-Your skepticism is exactly where the package should get more rigorous. For space-based data centers, **thermal rejection is not an auxiliary subsystem**. It is likely one of the dominant feasibility constraints, alongside launch cost, solar specific power, reliability, and communications.
+Thermal rejection is exactly where the package must be most rigorous. For space-based data centers, **thermal rejection is not an auxiliary subsystem**. It is likely one of the dominant feasibility constraints, alongside launch cost, solar specific power, reliability, and communications.
 
 The key framing:
 
@@ -372,7 +372,7 @@ Binding constraints:
 5. end-of-life coating degradation
 ```
 
-That is the level of diagnostic depth needed for this domain. Your skepticism is warranted because **thermal closure is where optimistic space-data-center economics can quietly fail**. The package should make that failure mode obvious, quantified, and traceable.
+That is the level of diagnostic depth needed for this domain. Rigor here matters because **thermal closure is where optimistic space-data-center economics can quietly fail**. The package should make that failure mode obvious, quantified, and traceable.
 
 [1]: https://www.nasa.gov/smallsat-institute/sst-soa/thermal-control/ "7.0 Thermal Control - NASA"
 [2]: https://arxiv.org/abs/2606.05741 "Space-CIM: Enabling Compute-In-Memory Accelerators for Thermally-Constrained Space Platforms"

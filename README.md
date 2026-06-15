@@ -6,8 +6,8 @@
 [![Python](https://img.shields.io/pypi/pyversions/spacedc-mdao.svg)](https://pypi.org/project/spacedc-mdao/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A skeptical, provenance-driven feasibility engine for orbital data centers, with
-terrestrial baselines for comparison. It optimizes **delivered useful compute**,
+A physics-based, provenance-driven feasibility engine for orbital data centers,
+with terrestrial baselines for comparison. It optimizes **delivered useful compute**,
 not nominal watts or nominal GPUs: it takes installed capacity, degrades it
 through power, thermal, network, reliability, and utilization limits, then reports
 which assumptions decide the outcome. The job is to make the feasibility boundary
