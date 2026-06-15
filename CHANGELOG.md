@@ -3,6 +3,17 @@
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
 compute and reports the feasibility boundary and the binding constraints.
 
+## Unreleased
+
+- Educational white paper ("Orbital data centers, by the numbers") teaching the
+  key technical and economic metrics through reproducible numbers, built on the
+  Project Suncatcher paper (arXiv:2511.19468): `docs/whitepaper.md` (site page +
+  README pointer + downloadable PDF). `scripts/build_whitepaper_pdf.py` renders it
+  with Tectonic (self-contained XeTeX; `brew install tectonic`) — a stdlib-only
+  Markdown-to-LaTeX converter, no pandoc or Python deps — to
+  `docs/assets/orbital-data-centers-primer.pdf`. A static `viability_ladder.png`
+  is emitted by the asset generator.
+
 ## 0.4.2
 
 - Reframed the package positioning from "skeptical" to physics-based/technical
