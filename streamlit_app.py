@@ -19,6 +19,7 @@ st.set_page_config(
     page_title="Orbital data centers, by the numbers",
     page_icon="🛰️",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 
@@ -137,6 +138,11 @@ st.caption(
     "An interactive physics-and-economics model of orbital compute versus the "
     "best terrestrial baselines. Move the sliders to see which assumptions decide "
     "whether the orbital case closes."
+)
+st.info(
+    "Open the sidebar on the left (the **»** arrow at the top-left if it is "
+    "collapsed) to choose scenarios and drag the assumption sliders.",
+    icon="👈",
 )
 
 st.sidebar.header("Scenario")
