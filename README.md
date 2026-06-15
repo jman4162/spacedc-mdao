@@ -15,6 +15,18 @@ visible, not to argue that space wins.
 
 ![Path to viability](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/viability_ladder.gif)
 
+## Live demo
+
+An interactive Streamlit app puts the model behind sliders — pick an orbital
+design and an Earth baseline, then drag the uncertain assumptions (launch $/kg,
+solar W/kg, radiator kg/m², utilization, comm intensity, failure rate) and watch
+the verdict, waterfalls, thermal stack, and architecture recompute live.
+
+<!-- Set the deployed URL here after connecting the repo on Streamlit Community Cloud. -->
+**[Open the app](https://share.streamlit.io/)** · run it locally with
+`uv run --extra app streamlit run streamlit_app.py`. See the
+[interactive-app docs](https://jman4162.github.io/spacedc-mdao/streamlit-app/).
+
 ## What would have to be true
 
 Against a hyperscale Earth baseline (PUE 1.10) at **$66**/PFLOP-day, the result
@@ -157,6 +169,15 @@ estimate, it agrees that Starship closes the launch gap, and it shows the
 remaining difference is a satellite cost (~$200/W here vs Starcloud's claimed
 $5/W) plus the delivered-compute metric. See
 [vs the McCalip calculator](https://jman4162.github.io/spacedc-mdao/vs-mccalip/).
+
+## White paper
+
+A short educational primer — "Orbital data centers, by the numbers" — teaches the
+key technical and economic metrics (specific power, radiator mass, communication
+intensity, launch $/kg, LCOC, capex/W) through reproducible numbers, built on
+Google's Project Suncatcher paper (arXiv:2511.19468). Read it at
+[the white paper page](https://jman4162.github.io/spacedc-mdao/whitepaper/)
+([PDF](https://jman4162.github.io/spacedc-mdao/assets/orbital-data-centers-primer.pdf)).
 
 ## Documentation
 

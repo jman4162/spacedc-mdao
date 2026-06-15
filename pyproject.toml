@@ -51,6 +51,9 @@ rf = ["opensatcom>=0.4.0"]
 mdao = ["openmdao>=3.44", "pymoo>=0.6", "SALib>=1.5"]
 # Interactive exploration dashboard (Phase 2C).
 viz = ["plotly>=6", "panel>=1.9", "networkx>=3", "kaleido>=0.2"]
+# Streamlit Cloud showcase app (streamlit_app.py). Slim runtime: just the viz
+# libraries the figure builders use, no panel/kaleido. Mirrors requirements.txt.
+app = ["streamlit>=1.40", "plotly>=6", "networkx>=3"]
 # Skyfield orbit propagation for ground-station access windows (Phase 2D).
 orbit = ["skyfield>=1.54"]
 dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
@@ -72,16 +75,26 @@ artifacts = ["src/orbitdc/py.typed", "src/orbitdc/data/*.yaml"]
 
 [tool.ruff]
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "app"]
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "NPY", "RUF"]
 
+# The app surfaces unit glyphs (× multiplication sign, ² superscript) in
+# user-facing strings; the ambiguous-character checks are noise there.
+# (scripts/build_whitepaper_pdf.py handles RUF001 with its own in-file noqa.)
+[tool.ruff.lint.per-file-ignores]
+"app/*.py" = ["RUF001", "RUF002", "RUF003"]
+"streamlit_app.py" = ["RUF001", "RUF002", "RUF003"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src"]
+# app/data.py (the substantive model glue) is type-checked; the streamlit
+# rendering glue (app/tabs.py, app/theme.py, streamlit_app.py) is excluded from
+# strict checking below — it is thin presentation over untyped streamlit calls.
+files = ["src", "app"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
@@ -97,14 +110,19 @@ module = [
     "plotly.*",
     "networkx.*",
     "skyfield.*",
+    "streamlit.*",
 ]
 ignore_missing_imports = true
 
 # Panel ships py.typed but has untyped functions; the dashboard is thin glue.
+# The streamlit rendering modules are the same shape: thin glue over an untyped UI.
 [[tool.mypy.overrides]]
-module = ["orbitdc.viz.dashboard"]
+module = ["orbitdc.viz.dashboard", "app.tabs", "app.theme"]
 disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# Put the repo root on sys.path so the streamlit app's `app` package imports in
+# the smoke test (orbitdc itself is installed; `app` lives at the repo root).
+pythonpath = ["."]

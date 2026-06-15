@@ -27,6 +27,7 @@ theme:
 nav:
   - Home: index.md
   - White paper: whitepaper.md
+  - Interactive app: streamlit-app.md
   - Quick start: quickstart.md
   - User tiers: tiers.md
   - Model architecture: architecture.md
