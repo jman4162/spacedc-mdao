@@ -7,8 +7,8 @@ waterfalls, thermal stack, and architecture recompute live.
 
 ## Live demo
 
-Deployed on Streamlit Community Cloud — link in the
-[README](https://github.com/jman4162/spacedc-mdao#live-demo). No install needed.
+[spacedc-mdao.streamlit.app](https://spacedc-mdao.streamlit.app/) — deployed on
+Streamlit Community Cloud, no install needed.
 
 ## Run it locally
 

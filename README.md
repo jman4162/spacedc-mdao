@@ -5,6 +5,7 @@
 [![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://jman4162.github.io/spacedc-mdao/)
 [![Python](https://img.shields.io/pypi/pyversions/spacedc-mdao.svg)](https://pypi.org/project/spacedc-mdao/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Streamlit app](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://spacedc-mdao.streamlit.app/)
 
 A physics-based, provenance-driven feasibility engine for orbital data centers,
 with terrestrial baselines for comparison. It optimizes **delivered useful compute**,
@@ -22,8 +23,7 @@ design and an Earth baseline, then drag the uncertain assumptions (launch $/kg,
 solar W/kg, radiator kg/m², utilization, comm intensity, failure rate) and watch
 the verdict, waterfalls, thermal stack, and architecture recompute live.
 
-<!-- Set the deployed URL here after connecting the repo on Streamlit Community Cloud. -->
-**[Open the app](https://share.streamlit.io/)** · run it locally with
+**[Open the live app](https://spacedc-mdao.streamlit.app/)** · run it locally with
 `uv run --extra app streamlit run streamlit_app.py`. See the
 [interactive-app docs](https://jman4162.github.io/spacedc-mdao/streamlit-app/).
 

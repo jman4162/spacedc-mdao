@@ -2769,6 +2769,12 @@ viz = [
     { name = "plotly" },
 ]
 
+[package.dev-dependencies]
+app-runtime = [
+    { name = "networkx" },
+    { name = "plotly" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "kaleido", marker = "extra == 'viz'", specifier = ">=0.2" },
@@ -2798,6 +2804,12 @@ requires-dist = [
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
 ]
 provides-extras = ["rf", "mdao", "viz", "app", "orbit", "dev", "docs"]
+
+[package.metadata.requires-dev]
+app-runtime = [
+    { name = "networkx", specifier = ">=3" },
+    { name = "plotly", specifier = ">=6" },
+]
 
 [[package]]
 name = "starlette"

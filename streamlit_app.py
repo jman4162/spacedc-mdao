@@ -134,8 +134,9 @@ def _build_overrides(space_path: str) -> dict[str, float]:
 
 st.title("🛰️ Orbital data centers, by the numbers")
 st.caption(
-    "An interactive physics-and-economics model of orbital compute vs the best "
-    "terrestrial baselines. Not a pitch — a feasibility boundary you can probe."
+    "An interactive physics-and-economics model of orbital compute versus the "
+    "best terrestrial baselines. Move the sliders to see which assumptions decide "
+    "whether the orbital case closes."
 )
 
 st.sidebar.header("Scenario")

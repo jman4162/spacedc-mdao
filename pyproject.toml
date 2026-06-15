@@ -60,6 +60,18 @@ dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
 # Documentation site (Phase 4D): MkDocs Material + API reference from docstrings.
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 
+# Installed by default on `uv sync` (see [tool.uv].default-groups). Streamlit
+# Community Cloud installs this repo as a uv project from pyproject.toml and does
+# not read requirements.txt or the [app] extra, so the figure libraries must be
+# in the default install set. PEP 735 groups are not part of the published wheel,
+# so `pip install spacedc-mdao` stays light. (streamlit itself is provided by the
+# Cloud runtime; locally it comes from the [app] extra.)
+[dependency-groups]
+app-runtime = ["plotly>=6", "networkx>=3"]
+
+[tool.uv]
+default-groups = ["app-runtime"]
+
 [project.urls]
 Repository = "https://github.com/jman4162/spacedc-mdao"
 Documentation = "https://jman4162.github.io/spacedc-mdao/"

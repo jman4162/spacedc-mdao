@@ -1,10 +1,8 @@
-# Streamlit Community Cloud runtime for the showcase app (streamlit_app.py).
-# Deliberately slim: the orbitdc base deps (pydantic/numpy/scipy/pint/pyyaml/
-# matplotlib) plus only the two viz libraries the figure builders actually use.
-# We do NOT install the [viz] extra here because it pulls panel + kaleido, which
-# are unnecessary for Streamlit and risk the free-tier memory ceiling. The heavy
-# solver extras (openmdao/pymoo/SALib) and skyfield are intentionally absent.
-.
-streamlit>=1.40
-plotly>=6
-networkx>=3
+# Runtime for the showcase app (streamlit_app.py) for any pip-based install.
+# Deliberately slim: orbitdc + the [app] extra (streamlit/plotly/networkx) — no
+# panel/kaleido (the [viz] extra) and no heavy solver extras (mdao) or skyfield.
+#
+# Note: Streamlit Community Cloud installs this repo as a uv project from
+# pyproject.toml and does NOT read this file, so the figure libraries are also
+# declared in pyproject's default-installed [dependency-groups].app-runtime.
+.[app]
