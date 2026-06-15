@@ -4,10 +4,19 @@
 
 llm_inference:
   comm_intensity_bits_per_flop:
+    value: 0.00000001
+    units: "bits/FLOP"
+    source: "Text token output, derived: ~32 bits/token / (2*N_params) FLOP/token gives ~2e-9 at 8B and ~2e-10 at 70B; 1e-8 allows protocol/JSON overhead, occasional logprobs, and a small-model mix"
+    date: "2026-06-14"
+    confidence: "low"
+    kind: "estimated"
+
+multimodal_inference:
+  comm_intensity_bits_per_flop:
     value: 0.000002
     units: "bits/FLOP"
-    source: "Compact token output; mostly Earth-bound but light I/O"
-    date: "2026-06-13"
+    source: "Rich-artifact return (embeddings/images/multimodal), derived: a 4096-dim fp16 embedding (~65 kbit) per ~1.4e10-FLOP forward pass is ~5e-6; generated images/video are comparable. This is where downlink bandwidth binds"
+    date: "2026-06-14"
     confidence: "low"
     kind: "estimated"
 

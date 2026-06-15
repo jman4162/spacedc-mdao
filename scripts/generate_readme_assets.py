@@ -32,11 +32,15 @@ SPACE = "examples/scenarios/orbital_1mw_inference.yaml"
 EARTH = "examples/scenarios/earth_hyperscale_baseline.yaml"
 OUT = Path("docs/assets/img")
 
-# Cumulative levers, each set to its aggressive/speculative bound, in impact
-# order. The labels carry the current -> target move.
+# Cumulative levers for the text-inference demo (network already un-bound at the
+# 0.75 optical-weather ceiling), each set to its aggressive/speculative bound in
+# impact order. The labels carry the current -> target move.
 LEVERS: list[tuple[str, dict[str, float]]] = [
-    ("baseline", {}),
-    ("+ downlink 200 Gbps -> unbounded", {"downlink_gbps": 1_000_000.0}),
+    ("baseline (text inference)", {}),
+    (
+        "+ optical availability 0.75 -> 0.95 (site diversity)",
+        {"optical_downlink_availability": 0.95},
+    ),
     ("+ launch $1,500 -> $200/kg", {"launch_cost_per_kg_usd": 200.0}),
     ("+ production learning (0.8)", {"learning_rate": 0.8}),
     ("+ solar 100 -> 200 W/kg", {"solar_specific_power_w_per_kg": 200.0}),
@@ -73,14 +77,14 @@ def viability_ladder_gif(space: Scenario, earth_lcoc: float, path: Path) -> None
         ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5)
         ax.text(1.05, -0.6, "Earth parity (1x)", color="black", fontsize=9)
         ax.set_xscale("log")
-        ax.set_xlim(0.7, 120)
+        ax.set_xlim(0.7, 40)
         ax.set_ylim(-1, n)
         ax.set_yticks(range(shown))
         ax.set_yticklabels(labels[:shown], fontsize=9)
         ax.invert_yaxis()
         ax.set_xlabel("space LCOC, multiples of Earth (log scale)")
         cur = ratios[shown - 1]
-        ax.set_title(f"Path to viability (1 MW inference): {cur:.0f}x Earth")
+        ax.set_title(f"Path to viability (1 MW text inference): {cur:.0f}x Earth")
         for i in range(shown):
             ax.text(ratios[i] * 1.05, i, f"{ratios[i]:.0f}x", va="center", fontsize=8)
         if shown == n:

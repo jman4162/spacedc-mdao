@@ -23,6 +23,8 @@ DESIGN_VARS: dict[str, tuple[str, float, float]] = {
     "altitude_km": ("altitude_km", 400.0, 1200.0),
     "radiator_t_rad_setpoint": ("radiator_t_rad_setpoint_k", 300.0, 345.0),
     "learning_rate": ("learning_rate", 0.75, 1.0),
+    "comm_intensity": ("comm_intensity_bits_per_flop", 1.0e-9, 5.0e-6),
+    "optical_availability": ("optical_downlink_availability", 0.60, 0.95),
 }
 
 # Integer architecture variables for mixed-integer optimization.

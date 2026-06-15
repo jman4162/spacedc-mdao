@@ -23,6 +23,11 @@ TORNADO_RANGES: dict[str, tuple[float, float]] = {
     "annual_failure_rate": (0.02, 0.12),
     "utilization": (0.50, 0.95),
     "learning_rate": (0.80, 1.0),
+    # The decisive downlink assumptions: comm intensity spans text (1e-9) to
+    # rich-output (5e-6) inference and dominates the swing.
+    "comm_intensity_bits_per_flop": (1.0e-9, 5.0e-6),
+    "downlink_gbps": (100.0, 1000.0),
+    "optical_downlink_availability": (0.60, 0.95),
 }
 
 

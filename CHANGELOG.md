@@ -3,6 +3,27 @@
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
 compute and reports the feasibility boundary; it is skeptical by default.
 
+## Unreleased
+
+### Downlink-claim accuracy correction
+- Recalibrated `llm_inference` communication intensity to a text-derived ~1e-8
+  bits/FLOP (32 bits/token / (2*N_params)); the prior 2e-6 was ~1,000-20,000x too
+  high for compact text output and silently set the "downlink-limited" headline.
+  Added a `multimodal_inference` workload (~2e-6) for the rich-output regime where
+  downlink bandwidth genuinely binds, plus `examples/scenarios/orbital_multimodal_inference.yaml`.
+  The text-inference demo is now ~19x Earth (optical-weather/capex-limited), not
+  82x; the multimodal demo is ~82x (downlink-bandwidth-limited).
+- Fixed a latent bug: a scenario's workload `type` now populates `workload_type`
+  (so the catalog comm intensity is actually used), and `comm_intensity_bits_per_flop`
+  defaults to `None` ("use catalog") so a `model_dump` round-trip no longer bakes
+  in a default that masks the catalog.
+- Surfaced the decisive assumptions as sensitivity drivers: `comm_intensity_bits_per_flop`,
+  `downlink_gbps`, and `optical_downlink_availability` (now an `evaluate_space`
+  override) are in the tornado and Sobol drivers; comm intensity dominates.
+- README, EQUATIONS section 9, and a docs limitations note: two workload regimes,
+  the bits/FLOP derivation, TBIRD (2023) 200 Gbps context, 0.75 as a single-site
+  weather/contact estimate, and the scalar-downlink limitation.
+
 ## 0.4.0 — Phase 4
 
 Credibility & validation, breadth, deepened physics (all opt-in), a docs site,
