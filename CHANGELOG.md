@@ -5,6 +5,22 @@ compute and reports the feasibility boundary; it is skeptical by default.
 
 ## Unreleased
 
+### McCalip / Economist reconciliation
+- Added a capacity-capex metric for an apples-to-apples comparison with the
+  McCalip calculator (cited by the Economist, Mar 2026): `Evaluation.capex_usd`
+  and `details["capex_per_w_ex_gpu"]` ($/W of IT power, accelerators excluded),
+  shown in the `compare` summary. Our Earth figure (~$12/W) matches McCalip's
+  terrestrial estimate.
+- Made satellite bus cost scenario-configurable (`SpaceParams.bus_cost_per_sat_usd`
+  + `evaluate_space` override; was a fixed catalog constant).
+- Added `examples/scenarios/orbital_mccalip_optimistic.yaml` (speculative launch,
+  150 W/kg solar, composite radiator, low bus cost, crosslink-only). It cuts
+  capex/W ~2.5x and LCOC to ~6x Earth — launch closes (Starship), but the
+  satellite stays ~$200/W vs Starcloud's claimed $5/W, and the waterfall keeps
+  LCOC above parity.
+- New docs page `vs-mccalip.md` decomposing the gap line by line, and a README
+  pointer. `tests/test_mccalip_comparison.py`.
+
 ### Downlink-claim accuracy correction
 - Recalibrated `llm_inference` communication intensity to a text-derived ~1e-8
   bits/FLOP (32 bits/token / (2*N_params)); the prior 2e-6 was ~1,000-20,000x too

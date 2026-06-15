@@ -79,6 +79,8 @@ class SpaceParams(BaseModel):
     launch: str = "current_reusable"
     # Launch-cost case: pulls a point from the launch catalog distribution.
     launch_case: Literal["current", "pessimistic", "aggressive", "speculative"] = "current"
+    # Satellite bus + integration cost (ex-GPU). None uses the cost_structure catalog.
+    bus_cost_per_sat_usd: float | None = Field(default=None, ge=0.0)
     # Thermal radiator co-design (Phase 2A).
     radiator_panel: str = "deployable_osr"
     coolant: str = "ammonia_single_phase"

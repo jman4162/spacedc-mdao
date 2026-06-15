@@ -140,6 +140,10 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     base_launch_cost = _launch_cost_for_case(sp.launch, sp.launch_case, launch.cost_per_kg_usd)
     launch_cost_per_kg = o.get("launch_cost_per_kg_usd", base_launch_cost)
     radiator_cost_per_m2 = o.get("radiator_cost_per_m2_usd", RADIATOR_COST_PER_M2_USD)
+    bus_cost_per_sat = o.get(
+        "bus_cost_per_sat_usd",
+        sp.bus_cost_per_sat_usd if sp.bus_cost_per_sat_usd is not None else BUS_COST_PER_SAT_USD,
+    )
     learning_rate = o.get("learning_rate", LEARNING_RATE_DEFAULT)
     annual_failure_rate = o.get("annual_failure_rate", sp.annual_failure_rate)
     utilization = o.get("utilization", scenario.utilization)
@@ -429,7 +433,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         battery_cost_usd=pw.battery_cost_usd * f_power,
         radiator_cost_usd=th.area_installed_m2 * radiator_cost_per_m2,
         n_satellites=n_sat,
-        bus_cost_per_sat_usd=BUS_COST_PER_SAT_USD,
+        bus_cost_per_sat_usd=bus_cost_per_sat,
         comms_cost_per_sat_usd=COMMS_COST_PER_SAT_USD,
         launch_mass_kg=launch_mass_kg,
         launch_cost_per_kg_usd=launch_cost_per_kg,
@@ -444,7 +448,13 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         bus_trl=BUS_TRL,
     )
 
+    # Capacity capex per watt of IT power, GPUs excluded: the apples-to-apples
+    # figure for the McCalip calculator / the Economist (their 1 GW total ex-GPU).
+    capex_ex_gpu = cr.capex_usd - cr.breakdown_usd.get("accelerators", 0.0)
+    capex_per_w_ex_gpu = capex_ex_gpu / it_power_w if it_power_w > 0.0 else float("inf")
+
     details: dict[str, float] = {
+        "capex_per_w_ex_gpu": capex_per_w_ex_gpu,
         "radiator_packaging_ratio": th.packaging_ratio,
         "solar_packaging_ratio": solar_packaging_ratio,
         "radiator_area_required_m2": th.area_required_m2,
@@ -504,6 +514,7 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
         lcoc_per_pflop_day=cr.lcoc_per_pflop_day,
         cost_per_accelerator_hour=cr.cost_per_accelerator_hour,
         lifecycle_pv_usd=cr.lifecycle_pv_usd,
+        capex_usd=cr.capex_usd,
         cost_breakdown_usd=cr.breakdown_usd,
         it_power_w=it_power_w,
         dry_mass_kg=ms.dry_mass_kg,
@@ -588,11 +599,17 @@ def evaluate_earth(scenario: Scenario) -> Evaluation:
         lcoc_per_pflop_day=cr.lcoc_per_pflop_day,
         cost_per_accelerator_hour=cr.cost_per_accelerator_hour,
         lifecycle_pv_usd=cr.lifecycle_pv_usd,
+        capex_usd=cr.capex_usd,
         cost_breakdown_usd=cr.breakdown_usd,
         it_power_w=it_power_w,
         details={
             "pue": eb.pue,
             "facility_power_w": eb.facility_power_w,
+            "capex_per_w_ex_gpu": (
+                (cr.capex_usd - cr.breakdown_usd.get("accelerators", 0.0)) / it_power_w
+                if it_power_w > 0.0
+                else float("inf")
+            ),
             "co2e_per_pflop_day": env_e.co2e_per_pflop_day,
             "co2e_total_t": env_e.co2e_total_kg / 1000.0,
             "water_l_per_pflop_day": env_e.water_l_per_pflop_day,
@@ -659,6 +676,9 @@ class ComparisonResult:
             f"{'delivered TFLOP/s':<32}{s.delivered_tflops:>18,.0f}{e.delivered_tflops:>18,.0f}",
             f"{'delivered fraction':<32}{s.delivered_fraction:>18.2%}{e.delivered_fraction:>18.2%}",
             f"{'LCOC $/PFLOP-day':<32}{s.lcoc_per_pflop_day:>18,.0f}{e.lcoc_per_pflop_day:>18,.0f}",
+            f"{'capex $/W IT (ex-GPU)':<32}"
+            f"{s.details.get('capex_per_w_ex_gpu', float('nan')):>18,.1f}"
+            f"{e.details.get('capex_per_w_ex_gpu', float('nan')):>18,.1f}",
             f"{'$/accelerator-hour':<32}{s.cost_per_accelerator_hour:>18,.3f}{e.cost_per_accelerator_hour:>18,.3f}",
             f"{'kgCO2e/PFLOP-day':<32}"
             f"{s.details.get('co2e_per_pflop_day', float('nan')):>18,.1f}"
