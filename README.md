@@ -17,40 +17,57 @@ visible, not to argue that space wins.
 
 ## What would have to be true
 
-For the bundled 1 MW LLM-inference design against a hyperscale Earth baseline
-(PUE 1.10), Earth costs **$66**/PFLOP-day and space costs **$5,389** — about
-**82x** more. Only **6.6%** of installed compute is delivered; the binding
-constraint is the network factor (0.17, downlink-limited). Stacking every
-improvement, each at its aggressive-to-speculative bound, shows what each metric
-buys:
+Against a hyperscale Earth baseline (PUE 1.10) at **$66**/PFLOP-day, the result
+depends entirely on what the workload ships to Earth, which sets the
+communication intensity (bits moved per FLOP):
+
+- **Text inference** (compact token output, derived ~1e-8 bits/FLOP): the network
+  un-binds. Space is **$1,237**/PFLOP-day, **~19x** Earth, delivering 29% of
+  installed compute. The binding limit is the **0.75 optical-downlink weather
+  availability** (single-site, mitigable by site diversity) plus launch and
+  radiator capex, not downlink bandwidth.
+- **Rich-output inference** (embeddings, multimodal, artifact return, ~2e-6
+  bits/FLOP): the downlink bandwidth binds. Space is **$5,389**, **~82x** Earth,
+  delivering 6.6%.
+
+Communication intensity is the single most decisive assumption (see the tornado
+below). Stacking every other improvement on the text-inference design, each at
+its aggressive-to-speculative bound:
 
 | Lever (current -> target) | Cumulative LCOC | x Earth |
 | --- | ---: | ---: |
-| baseline | $5,389 | 82x |
-| downlink throughput 200 Gbps -> unbounded | $1,237 | 19x |
-| launch cost $1,500 -> $200/kg | $765 | 12x |
-| production learning (unit cost) | $512 | 8x |
-| solar 100 -> 200 W/kg | $506 | 8x |
-| radiator 7 -> 2 kg/m^2 | $502 | 8x |
-| utilization 0.85 -> 0.98 | $435 | 7x |
-| failure rate 0.05 -> 0.01 /yr | $394 | **6x** |
+| baseline (text inference) | $1,237 | 19x |
+| optical availability 0.75 -> 0.95 (site diversity) | $977 | 15x |
+| launch cost $1,500 -> $200/kg | $604 | 9x |
+| production learning (unit cost) | $404 | 6x |
+| solar 100 -> 200 W/kg | $400 | 6x |
+| radiator 7 -> 2 kg/m^2 | $396 | 6x |
+| utilization 0.85 -> 0.98 | $344 | 5x |
+| failure rate 0.05 -> 0.01 /yr | $311 | **5x** |
 
-Two ceilings no hardware fixes. The network factor is pinned at **0.75** by
-optical-downlink weather availability, so more bandwidth cannot exceed it without
-RF downlink, more ground stations, or a relay. And even with every lever maxed,
-space lands at **~6x Earth** ($394 vs $66) and wins **0%** of 500 Monte-Carlo
-draws — the residual is the launch, radiator, and bus mass Earth never carries.
-The unlock is a space-native, near-zero-downlink workload, not a faster GPU.
+Even with every lever maxed, text inference lands at **~5x Earth** and wins **0%**
+of 500 Monte-Carlo draws. The residual is the launch, radiator, and bus mass Earth
+never carries. These numbers are produced by the model, not typed in; regenerate
+with `python scripts/generate_readme_assets.py`.
 
-These numbers are produced by the model, not typed in; regenerate them with
-`python scripts/generate_readme_assets.py`.
+### On the downlink claim
+
+The 200 Gbps optical downlink in the scenario is a demonstrated LEO burst rate
+(NASA/MIT Lincoln Laboratory TBIRD, 2023). The model treats `downlink_gbps` as a
+scalar service rate times an availability factor, not an end-to-end time-averaged
+rate derived from terminal count, contact windows, ground-station diversity,
+weather, buffering, and ground-network egress. The 0.75 optical availability is a
+single-site weather/contact estimate, not a universal cap. RF can add a
+cloud-robust fallback and continuity, but it is not a drop-in replacement for a
+bulk optical pipe (its own spectrum, antenna, power, and ground tradeoffs). See
+the limitations note below.
 
 ## What the model shows
 
 | | |
 | --- | --- |
-| ![Delivered waterfall](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/delivered_waterfall.png) | Installed peak compute degraded to delivered: the network-limited step is the cliff. |
-| ![Tornado](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/tornado.png) | Which assumptions move levelized cost. Launch $/kg dominates the swept drivers. |
+| ![Tornado](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/tornado.png) | Communication intensity dominates LCOC sensitivity by far — the dominant uncertainty, now an explicit driver. |
+| ![Delivered waterfall](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/delivered_waterfall.png) | Installed peak compute degraded to delivered for the text-inference design. |
 | ![Monte Carlo](https://raw.githubusercontent.com/jman4162/spacedc-mdao/main/docs/assets/img/monte_carlo.png) | LCOC distribution under input uncertainty; space beats Earth in 0% of draws. |
 
 ## Install
@@ -111,6 +128,22 @@ Wright's-law learning curve. Every default number carries provenance (source,
 date, confidence, kind). The [model architecture](https://jman4162.github.io/spacedc-mdao/architecture/)
 and [governing equations](https://jman4162.github.io/spacedc-mdao/equations/)
 pages have the details; v0.4.0 completes Phases 1-4 (see `CHANGELOG.md`).
+
+## Limitations
+
+First-order by design; the results are only as good as the assumptions, which is
+why every default is provenance-tagged and exposed as a sensitivity driver. Two
+to keep in mind:
+
+- **Workload I/O dominates.** Communication intensity (bits/FLOP) is the most
+  decisive input and is low confidence. The catalog separates text inference
+  (~1e-8, derived from token size / model FLOPs) from rich-output inference
+  (~2e-6); pick the one that matches what you actually ship to Earth.
+- **Downlink is a scalar service rate, not an end-to-end model.** `downlink_gbps`
+  times an availability factor is not the same as a time-averaged operational
+  rate from terminal count, contact windows, ground-station diversity, weather,
+  buffering, and ground-network egress. Treat the network result as a bound, and
+  the 0.75 optical availability as a single-site weather estimate.
 
 ## Documentation
 

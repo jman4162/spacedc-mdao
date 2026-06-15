@@ -63,6 +63,7 @@ RADIATOR_COST_PER_M2_USD = _COST["radiator_cost_per_m2_usd"]
 LEARNING_RATE_DEFAULT = _COST["learning_rate"]
 BUS_TRL = _COST["bus_trl"]
 ALUMINUM_CP_J_PER_KG_K = 900.0  # radiator thermal capacitance (specific heat)
+GENERIC_COMM_INTENSITY = 1e-3  # fallback bits/FLOP when no workload type/value is set
 
 logger = logging.getLogger("orbitdc")
 
@@ -143,12 +144,20 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
     annual_failure_rate = o.get("annual_failure_rate", sp.annual_failure_rate)
     utilization = o.get("utilization", scenario.utilization)
     wl = scenario.workload
-    if wl.workload_type and "comm_intensity_bits_per_flop" not in wl.model_fields_set:
-        base_comm = catalog_loader.entry("workloads.yaml", wl.workload_type)[
-            "comm_intensity_bits_per_flop"
-        ]
-    else:
-        base_comm = wl.comm_intensity_bits_per_flop
+    # Resolve comm intensity: an explicit value wins; else the workload_type
+    # catalog; else a generic fallback.
+    base_comm = wl.comm_intensity_bits_per_flop
+    if base_comm is None and wl.workload_type:
+        try:
+            base_comm = catalog_loader.entry("workloads.yaml", wl.workload_type)[
+                "comm_intensity_bits_per_flop"
+            ]
+        except KeyError:
+            logger.warning(
+                "unknown workload_type %r; using generic comm intensity", wl.workload_type
+            )
+    if base_comm is None:
+        base_comm = GENERIC_COMM_INTENSITY
     comm_intensity = o.get("comm_intensity_bits_per_flop", base_comm)
     downlink_gbps = o.get("downlink_gbps", arch.downlink_gbps)
     # Architecture overrides (used by mixed-integer optimization).
@@ -291,9 +300,10 @@ def evaluate_space(scenario: Scenario, overrides: dict[str, float] | None = None
 
     # Optical ground downlinks lose availability to weather; RF TT&C must close.
     comms = catalog_loader.entry("comms.yaml", "default")
-    optical_availability = (
-        comms["optical_downlink_availability"] if arch.downlink_type == "optical" else 1.0
+    base_optical_availability = o.get(
+        "optical_downlink_availability", comms["optical_downlink_availability"]
     )
+    optical_availability = base_optical_availability if arch.downlink_type == "optical" else 1.0
 
     # Skyfield orbit fidelity: refine optical availability by the ground-station
     # access fraction. Graceful fallback (logged) on missing extra/data/TLE.

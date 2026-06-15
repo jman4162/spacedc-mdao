@@ -496,6 +496,21 @@ Where $\alpha$ is parallel overhead, $\beta$ is the communication penalty, $B_{\
 
 Make network bottlenecks explicit, and distinguish **space-native workloads** (compact outputs) from **Earth-dependent workloads** (large input/output movement).
 
+### Communication intensity is the decisive, uncertain input
+
+$I_{\mathrm{comm}}$ spans orders of magnitude by workload and is the dominant LCOC driver, so derive it rather than guess. For LLM **text inference**, the output is tokens and the compute is roughly $2 N_{\mathrm{params}}$ FLOP per generated token:
+
+$$
+I_{\mathrm{comm}} \approx \frac{b_{\mathrm{token}}}{2 N_{\mathrm{params}}}
+\quad\Rightarrow\quad
+\frac{32\ \mathrm{bits}}{2 \cdot 8\times10^9} \approx 2\times10^{-9},\quad
+\frac{32}{2 \cdot 70\times10^9} \approx 2\times10^{-10}\ \mathrm{bits/FLOP}
+$$
+
+For **rich-output inference** (returning embeddings, images, or multimodal artifacts) the ratio is far higher: a 4096-dim fp16 embedding ($\approx 65$ kbit) per $\sim 1.4\times10^{10}$-FLOP forward pass is $\approx 5\times10^{-6}$ bits/FLOP. Text inference un-binds the downlink; rich-output binds it. The package carries both as separate workload presets.
+
+**Limitation: the downlink is a scalar service rate.** The model uses $B_{\mathrm{available}} = R_{\mathrm{downlink}} \cdot a_{\mathrm{optical}}$ — a terminal rate times an availability fraction — not an end-to-end time-averaged rate derived from terminal count, contact windows, ground-station diversity, weather, buffering, and ground-network egress. A demonstrated burst rate (e.g. TBIRD's 200 Gbps from LEO, 2023) is an upper bound on $R_{\mathrm{downlink}}$, and $a_{\mathrm{optical}}$ (default 0.75) is a single-site weather/contact estimate that site diversity raises. Treat the network factor as a bound, not an operational service level.
+
 ## 10. Reliability, radiation, and availability equations
 
 Exponential reliability:

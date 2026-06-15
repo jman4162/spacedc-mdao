@@ -48,3 +48,19 @@ confidence, and kind. `viz.provenance.collect_provenance()` walks the catalogs
 and surfaces them; the [Assumptions & provenance](provenance.md) page is
 generated from it. This is what lets the package be skeptical without being
 arbitrary: the assumptions are visible and challengeable.
+
+## Limitations
+
+The package is first-order by design. Two limits shape how to read the network
+result:
+
+- **Communication intensity (bits/FLOP) dominates and is low confidence.** It
+  spans orders of magnitude by workload, so it is derived per workload (text
+  inference ~1e-8 from token size / model FLOPs; rich-output ~2e-6) and exposed
+  as the top sensitivity driver, not a single hidden scalar.
+- **Downlink is a scalar service rate.** `downlink_gbps` times an optical
+  availability factor is a bound, not an end-to-end time-averaged rate derived
+  from terminal count, contact windows, ground-station diversity, weather,
+  buffering, and ground-network egress. The 0.75 default availability is a
+  single-site weather estimate that site diversity raises. See
+  `background_information/EQUATIONS.md` section 9.

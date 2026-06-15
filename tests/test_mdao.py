@@ -21,6 +21,9 @@ from orbitdc.optimize.pareto import pareto_nsga2, pareto_nsga2_mixed
 from orbitdc.optimize.sensitivity import sobol_indices
 
 SPACE = Path(__file__).parents[1] / "examples" / "scenarios" / "orbital_1mw_inference.yaml"
+MULTIMODAL = (
+    Path(__file__).parents[1] / "examples" / "scenarios" / "orbital_multimodal_inference.yaml"
+)
 
 
 def _space() -> odc.Scenario:  # type: ignore[name-defined]
@@ -86,7 +89,8 @@ def test_doe_shape() -> None:
 
 def test_sobol_downlink_is_top_driver() -> None:
     drivers = ["utilization", "downlink_gbps", "launch_cost_per_kg", "annual_failure_rate"]
-    sob = sobol_indices(_space(), "lcoc", design_vars=drivers, n=16, seed=0)
-    # Among the network/cost drivers, downlink dominates a network-limited design.
+    # The multimodal workload is downlink-bandwidth-bound, so downlink dominates;
+    # the text-inference demo un-binds the network and downlink would not.
+    sob = sobol_indices(odc.load_scenario(MULTIMODAL), "lcoc", design_vars=drivers, n=16, seed=0)
     top = max(sob.st, key=lambda k: sob.st[k])
     assert top == "downlink_gbps"

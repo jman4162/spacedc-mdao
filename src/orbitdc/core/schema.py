@@ -19,9 +19,21 @@ class Workload(BaseModel):
 
     type: str = "generic"
     # Named workload preset (data/workloads.yaml); supplies comm intensity if set.
+    # Defaults from `type` so a scenario's `type: llm_inference` pulls the catalog.
     workload_type: str | None = None
-    # bits moved off-accelerator per FLOP of delivered compute; drives the network limit.
-    comm_intensity_bits_per_flop: float = Field(default=1e-3, ge=0.0)
+    # bits moved off-accelerator per FLOP of delivered compute; drives the network
+    # limit. None means "resolve from workload_type catalog" (survives model_dump
+    # round-trips, unlike a magic default that reloads as an explicit value).
+    comm_intensity_bits_per_flop: float | None = Field(default=None, ge=0.0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _workload_type_from_type(cls, data: object) -> object:
+        if isinstance(data, dict):
+            t = data.get("type")
+            if data.get("workload_type") is None and t not in (None, "generic"):
+                return {**data, "workload_type": t}
+        return data
 
 
 class Orbit(BaseModel):

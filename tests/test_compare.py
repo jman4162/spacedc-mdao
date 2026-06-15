@@ -57,7 +57,7 @@ def test_thresholds_present() -> None:
 def test_tornado_sorted_by_swing() -> None:
     space = odc.load_scenario(SPACE)
     entries = tornado(space)
-    assert len(entries) == 6
+    assert len(entries) == 9
     swings = [e.swing for e in entries]
     assert swings == sorted(swings, reverse=True)
 

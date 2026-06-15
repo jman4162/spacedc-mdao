@@ -1,4 +1,4 @@
-name: "1 MW orbital inference cluster"
+name: "1 MW orbital multimodal-inference cluster"
 kind: space
 mission_life_years: 5
 accelerator: h100_sxm
@@ -7,10 +7,10 @@ sustained_fraction: 0.55
 discount_rate: 0.08
 
 workload:
-  # Text token output: comm intensity is inherited from the workloads catalog
-  # (~1e-8 bits/FLOP, derived). The network un-binds for this regime; see the
-  # multimodal scenario for the downlink-bandwidth-bound case.
-  type: llm_inference
+  # Rich-artifact return (embeddings/images/multimodal): comm intensity is high
+  # (~2e-6 bits/FLOP, derived). This is the regime where the downlink bandwidth
+  # binds; contrast with orbital_1mw_inference.yaml (text output, un-binds).
+  type: multimodal_inference
 
 space:
   orbit:
