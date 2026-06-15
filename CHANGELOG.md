@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
-compute and reports the feasibility boundary; it is skeptical by default.
+compute and reports the feasibility boundary and the binding constraints.
 
 ## 0.4.1
 

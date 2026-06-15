@@ -14,10 +14,9 @@ C_delivered = C_peak · f_software · f_power · f_thermal · f_network · f_ava
 ```
 
 Every default number is a provenance-tagged assumption (value, units, source,
-date, confidence). The package is skeptical by default: for the bundled 1 MW
-inference scenario, Earth wins on levelized cost — the orbital design is
-downlink-limited, its radiators are a multi-tonne burden, and station-keeping
-plus replacement add up.
+date, confidence). For the bundled 1 MW text-inference scenario, Earth wins on
+levelized cost — the orbital design is limited by optical-downlink availability
+and the launch, radiator, and station-keeping mass it carries.
 
 ## Where to go next
 

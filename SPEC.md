@@ -591,7 +591,7 @@ Falling launch cost helps, but it does not eliminate radiator, solar, comms, rel
 
 Build this as a **transparent MDAO + visualization package**, not a single calculator. The best first release should be a rigorous assumption-exploration tool that lets users ask: “Under what assumptions does space beat Earth, and which assumptions are doing the work?”
 
-The package should be skeptical by default. Its job is not to prove orbital data centers are viable. Its job is to make the feasibility boundary visible. The most important design choice is to report **binding constraints and sensitivity**, because the feasibility of space-based data centers is likely dominated by a small set of uncertain parameters: launch $/kg, satellite $/W, solar W/kg, radiator kg/kW, useful utilization, communication intensity, failure rate, and mission life.
+The package's job is not to prove orbital data centers are viable; it is to make the feasibility boundary visible. The most important design choice is to report **binding constraints and sensitivity**, because the feasibility of space-based data centers is likely dominated by a small set of uncertain parameters: launch $/kg, satellite $/W, solar W/kg, radiator kg/kW, useful utilization, communication intensity, failure rate, and mission life.
 
 [1]: https://research.google/blog/exploring-a-space-based-scalable-ai-infrastructure-system-design/ "Exploring a space-based, scalable AI infrastructure system design"
 [2]: https://openmdao.org/ "OpenMDAO.org | An open-source framework for efficient multidisciplinary optimization."

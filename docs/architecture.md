@@ -46,8 +46,8 @@ tighter of the junction and HBM limits; closure is checked at end of life.
 Every default number is an `Assumption` with a value, units, source, date,
 confidence, and kind. `viz.provenance.collect_provenance()` walks the catalogs
 and surfaces them; the [Assumptions & provenance](provenance.md) page is
-generated from it. This is what lets the package be skeptical without being
-arbitrary: the assumptions are visible and challengeable.
+generated from it. This is what makes the analysis reproducible rather than
+arbitrary: every assumption is visible and challengeable.
 
 ## Limitations
 

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "spacedc-mdao"
 version = "0.4.1"
-description = "Skeptical, provenance-driven feasibility MDAO for orbital data centers vs Earth baselines."
+description = "Physics-based, provenance-driven feasibility MDAO for orbital data centers vs terrestrial baselines."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

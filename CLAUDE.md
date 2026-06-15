@@ -64,7 +64,7 @@ installed compute
 
 Equivalently (per `EQUATIONS.md` §1), `C_delivered = C_peak · f_power · f_thermal · f_network · f_availability · f_utilization · f_software` — each factor is a model that multiplies installed capacity down. And the same chain drives cost: useful compute → power → heat → radiator area → mass → launch cost → lifetime delivered compute. Power closure does **not** imply thermal closure; never silently assume all IT power can be rejected.
 
-The package's job is **not** to prove space data centers are viable. It is to make the feasibility boundary visible — to report **binding constraints and sensitivity**, so a user can see *which* uncertain assumptions (launch $/kg, satellite $/W, solar W/kg, radiator kg/kW, utilization, communication intensity, failure rate, mission life) are doing the work. Be skeptical by default. Prefer diagnostics like "space does not close because radiator area exceeds packaging by 38%" over a single headline cost number.
+The package's job is **not** to prove space data centers are viable. It is to make the feasibility boundary visible — to report **binding constraints and sensitivity**, so a user can see *which* uncertain assumptions (launch $/kg, satellite $/W, solar W/kg, radiator kg/kW, utilization, communication intensity, failure rate, mission life) are doing the work. Prefer diagnostics like "space does not close because radiator area exceeds packaging by 38%" over a single headline cost number.
 
 ## Architectural shape (from SPEC.md)
 
