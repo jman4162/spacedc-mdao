@@ -26,6 +26,7 @@ theme:
 
 nav:
   - Home: index.md
+  - White paper: whitepaper.md
   - Quick start: quickstart.md
   - User tiers: tiers.md
   - Model architecture: architecture.md

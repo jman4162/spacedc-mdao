@@ -1,5 +1,7 @@
 # Reference papers — not redistributed; cite by arXiv ID (e.g. arXiv:2511.19468)
 *.pdf
+# Except the white-paper PDF we publish with the docs.
+!docs/assets/orbital-data-centers-primer.pdf
 
 # Local-only reference (CC BY-SA from Wikipedia; kept out of this MIT repo).
 # Cited by URL: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing

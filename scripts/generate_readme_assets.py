@@ -106,6 +106,32 @@ def viability_ladder_gif(space: Scenario, earth_lcoc: float, path: Path) -> None
     plt.close(fig)
 
 
+def viability_ladder_png(space: Scenario, earth_lcoc: float, path: Path) -> None:
+    """Static version of the viability ladder (all bars) for the white paper / PDF."""
+    labels, ratios = _ladder(space, earth_lcoc)
+    n = len(ratios)
+    fig, ax = plt.subplots(figsize=(9, 5))
+    colors = ["#4c72b0"] * n
+    colors[0] = "#c44e52"
+    colors[-1] = "#dd8452"
+    ax.barh(range(n), ratios, color=colors)
+    ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5)
+    ax.text(1.05, -0.6, "Earth parity (1x)", color="black", fontsize=9)
+    ax.set_xscale("log")
+    ax.set_xlim(0.7, 40)
+    ax.set_ylim(-1, n)
+    ax.set_yticks(range(n))
+    ax.set_yticklabels(labels, fontsize=9)
+    ax.invert_yaxis()
+    ax.set_xlabel("space LCOC, multiples of Earth (log scale)")
+    ax.set_title(f"Path to viability (1 MW text inference): frontier {ratios[-1]:.0f}x Earth")
+    for i in range(n):
+        ax.text(ratios[i] * 1.05, i, f"{ratios[i]:.0f}x", va="center", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(path, dpi=130, bbox_inches="tight")
+    plt.close(fig)
+
+
 def _write_png(fig: object, path: Path, *, plotly: bool = True) -> None:
     if plotly:
         pio.write_image(fig, path, width=900, height=520, scale=2)
@@ -125,7 +151,8 @@ def main() -> None:
     print(f"space LCOC={result.space.lcoc_per_pflop_day:,.0f}  earth LCOC={earth_lcoc:,.0f}")
 
     viability_ladder_gif(space, earth_lcoc, OUT / "viability_ladder.gif")
-    print("wrote viability_ladder.gif")
+    viability_ladder_png(space, earth_lcoc, OUT / "viability_ladder.png")
+    print("wrote viability_ladder.gif + .png")
 
     _write_png(
         plot_delivered_waterfall(result.space), OUT / "delivered_waterfall.png", plotly=False
