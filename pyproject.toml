@@ -61,13 +61,13 @@ dev = ["ruff>=0.6", "mypy>=1.10", "pytest>=8.0", "types-PyYAML>=6.0"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 
 # Installed by default on `uv sync` (see [tool.uv].default-groups). Streamlit
-# Community Cloud installs this repo as a uv project from pyproject.toml and does
-# not read requirements.txt or the [app] extra, so the figure libraries must be
-# in the default install set. PEP 735 groups are not part of the published wheel,
-# so `pip install spacedc-mdao` stays light. (streamlit itself is provided by the
-# Cloud runtime; locally it comes from the [app] extra.)
+# Community Cloud installs this repo with `uv sync` against uv.lock, which is an
+# EXACT sync: it removes anything not in the locked default set. So the app's full
+# runtime — streamlit included — must live here, or uv-sync evicts the streamlit
+# Cloud pre-installs ("streamlit: command not found"). PEP 735 groups are not part
+# of the published wheel, so `pip install spacedc-mdao` stays light.
 [dependency-groups]
-app-runtime = ["plotly>=6", "networkx>=3"]
+app-runtime = ["streamlit>=1.40", "plotly>=6", "networkx>=3"]
 
 [tool.uv]
 default-groups = ["app-runtime"]

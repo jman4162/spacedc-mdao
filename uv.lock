@@ -2773,6 +2773,7 @@ viz = [
 app-runtime = [
     { name = "networkx" },
     { name = "plotly" },
+    { name = "streamlit" },
 ]
 
 [package.metadata]
@@ -2809,6 +2810,7 @@ provides-extras = ["rf", "mdao", "viz", "app", "orbit", "dev", "docs"]
 app-runtime = [
     { name = "networkx", specifier = ">=3" },
     { name = "plotly", specifier = ">=6" },
+    { name = "streamlit", specifier = ">=1.40" },
 ]
 
 [[package]]
