@@ -29,6 +29,7 @@ nav:
   - Quick start: quickstart.md
   - User tiers: tiers.md
   - Model architecture: architecture.md
+  - vs the McCalip calculator: vs-mccalip.md
   - Governing equations: equations.md
   - Assumptions & provenance: provenance.md
   - API reference: api.md

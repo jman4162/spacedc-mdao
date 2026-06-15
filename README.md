@@ -145,6 +145,19 @@ to keep in mind:
   buffering, and ground-network egress. Treat the network result as a bound, and
   the 0.75 optical availability as a single-site weather estimate.
 
+## Compared to the McCalip calculator
+
+The Economist (Mar 2026) cites Andrew McCalip's calculator showing a 1 GW orbital
+data center at near-parity with Earth under optimistic assumptions. That is not in
+conflict with this package's ~19x: McCalip compares capex per nominal capacity
+(GPUs excluded), while the headline here is cost per *delivered* compute after the
+waterfall. The package exposes `capex_per_w_ex_gpu` for an apples-to-apples
+comparison — its Earth figure (~$12/W, ~$12bn/GW) matches McCalip's terrestrial
+estimate, it agrees that Starship closes the launch gap, and it shows the
+remaining difference is a satellite cost (~$200/W here vs Starcloud's claimed
+$5/W) plus the delivered-compute metric. See
+[vs the McCalip calculator](https://jman4162.github.io/spacedc-mdao/vs-mccalip/).
+
 ## Documentation
 
 Full docs: <https://jman4162.github.io/spacedc-mdao/> — quick start, user tiers,

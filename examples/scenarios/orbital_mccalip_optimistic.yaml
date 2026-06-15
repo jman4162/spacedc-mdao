@@ -1,0 +1,42 @@
+name: "1 MW orbital (McCalip-optimistic sliders)"
+kind: space
+mission_life_years: 5
+accelerator: h100_sxm
+utilization: 0.85
+sustained_fraction: 0.55
+discount_rate: 0.08
+
+workload:
+  # Text inference, crosslink-only operation (results consumed/stored in space):
+  # no ground-downlink dependency, matching the Economist's described architecture.
+  type: llm_inference
+
+space:
+  orbit:
+    type: dawn_dusk_sso
+    altitude_km: 650.0
+  architecture:
+    satellites: 64
+    accelerators_per_satellite: 18
+    crosslink: optical
+    crosslink_gbps: 50000.0
+    downlink_gbps: 200.0
+    # RF/crosslink-only: no optical-weather penalty on a ground downlink.
+    downlink_type: rf
+    radiator_area_m2_per_sat: 45.0
+  it_power_overhead_frac: 0.25
+  non_it_power_frac: 0.10
+  # McCalip/Starcloud-optimistic sliders:
+  launch_case: speculative          # ~$200/kg (Starship, speculative)
+  solar_array: flexible_rosa        # 150 W/kg
+  radiator_panel: composite_deployable  # 4 kg/m^2
+  bus_cost_per_sat_usd: 300000.0    # aggressive low bus cost (vs $2M default)
+  battery: li_ion_high_energy
+  launch: current_reusable
+  coolant: ammonia_single_phase
+  chip_stack: h100_direct_liquid
+  thermal_environment: conservative_leo
+  thermal_eol: true
+  annual_failure_rate: 0.05
+  spare_fraction: 0.05
+  reset_recovery_availability: 0.99

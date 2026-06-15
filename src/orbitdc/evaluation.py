@@ -21,6 +21,7 @@ class Evaluation:
     lcoc_per_pflop_day: float
     cost_per_accelerator_hour: float
     lifecycle_pv_usd: float
+    capex_usd: float  # total build capex (capex_per_w_ex_gpu lives in details)
     cost_breakdown_usd: dict[str, float]
     it_power_w: float
     # Space-only fields (None for earth).
