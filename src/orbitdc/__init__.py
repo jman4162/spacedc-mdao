@@ -25,7 +25,7 @@ from orbitdc.core.scenario import load_scenario, load_scenario_dict
 from orbitdc.evaluation import Evaluation
 from orbitdc.reporting import export_report
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "ComparisonResult",

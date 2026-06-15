@@ -3,7 +3,10 @@
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
 compute and reports the feasibility boundary; it is skeptical by default.
 
-## Unreleased
+## 0.4.1
+
+Accuracy and credibility fixes after external review: the downlink-claim
+correction (text vs rich-output regimes) and the McCalip/Economist reconciliation.
 
 ### McCalip / Economist reconciliation
 - Added a capacity-capex metric for an apples-to-apples comparison with the
