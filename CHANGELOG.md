@@ -3,6 +3,11 @@
 All notable changes to `spacedc-mdao`. The package optimizes delivered useful
 compute and reports the feasibility boundary and the binding constraints.
 
+## 0.4.2
+
+- Reframed the package positioning from "skeptical" to physics-based/technical
+  across the description, README, and docs (no code, catalog, or behavior change).
+
 ## 0.4.1
 
 Accuracy and credibility fixes after external review: the downlink-claim
